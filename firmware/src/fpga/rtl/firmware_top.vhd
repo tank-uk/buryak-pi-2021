@@ -340,7 +340,7 @@ begin
 					end if;
 					
 					-- port FF / timex CFG
-					if (A(7 downto 0) = X"FF" and enable_timex) then 
+					if (A(7 downto 0) = X"FF" and enable_timex and trdos = '0') then 
 						timexcfg_reg(5 downto 0) <= D(5 downto 0);
 						is_port_ff <= '1';
 					end if;
@@ -546,8 +546,8 @@ begin
 	VGA_R <= vga_red when enable_vga else rgb(2) & i;
 	VGA_G <= vga_green when enable_vga else rgb(1) & i;
 	VGA_B <= vga_blue when enable_vga else rgb(0) & i;
-	VGA_HSYNC <= hsync_vga when enable_vga else hsync;
-	VGA_VSYNC <= vsync_vga when enable_vga else vsync;
+	VGA_HSYNC <= hsync_vga when enable_vga else hsync xor (not vsync);
+	VGA_VSYNC <= vsync_vga when enable_vga else hsync xor (not vsync);
 	
 	-- osd (debug)
 --	U8: entity work.osd
