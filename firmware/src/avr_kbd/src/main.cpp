@@ -3,7 +3,7 @@
  * 
  * Designed to build on PlatformIO env.
  * 
- * External libraries: https://github.com/jonthysell/SegaController/
+ * External libraries: https://github.com/jonthysell/SegaController/, https://github.com/techpaul/PS2KeyRaw
  * Arduino libraries: SPI, EEPROM
  * 
  * @author Andy Karpov <andy.karpov@gmail.com>
