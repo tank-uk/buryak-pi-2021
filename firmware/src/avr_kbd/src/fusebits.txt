@@ -1,0 +1,6 @@
+16MHz external crystal:
+
+Low: 0x8E
+High: 0xD9
+
+avrdude -p atmega8 -c USBasp -U flash:w:avr_kbd.hex -U lfuse:w:0x8e:m -U hfuse:w:0xd9:m

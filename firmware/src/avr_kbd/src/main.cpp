@@ -1,90 +1,68 @@
 /*
  * AVR keyboard firmware for Buryak-Pi 2021 project
  * 
- * Designed to build on Arduino IDE.
+ * Designed to build on PlatformIO env.
  * 
  * External libraries: https://github.com/jonthysell/SegaController/
+ * Arduino libraries: SPI, EEPROM
  * 
  * @author Andy Karpov <andy.karpov@gmail.com>
  * Ukraine, 2021
  */
 
-#include "ps2.h"
+#include "config.h"
+#include "PS2KeyRaw.h"
 #include "matrix.h"
 #include "ps2_codes.h"
 #include <EEPROM.h>
 #include <SPI.h>
 
-#define DEBUG_MODE 0
-
-// Joystick type
-#define JOY_KEMPSTON 0
-#define JOY_SEGA 1
-#define JOY_TYPE JOY_KEMPSTON // JOY_SEGA
-
-// Blink mode
-#define BLINK_ROMBANK 0 // LED_ROMBANK blinks when rombank is not 0
-#define BLINK_WAIT 1 // LED_ROMBANK blinks when wait is active
-#define BLINK_MODE BLINK_WAIT // BLINK_WAIT
-
-// Pins
-#define PIN_BTN_NMI 0
-#define PIN_KBD_DAT 1
-#define PIN_KBD_CLK 2 
-
-// hardware SPI
-#define PIN_SS 10 // SPI slave select
-
-#define LED_PWR A0
-#define LED_KBD A1
-#define LED_TURBO A2
-#define LED_ROMBANK A3
-#define LED_PAUSE A4
-#define AUDIO_OFF A5
-
-#if JOYTYPE==JOY_SEGA
-  #include "sega_controller.h" // https://github.com/jonthysell/SegaController/
-  SegaController joystick(4, 5, 6, 7, 8, 9, 3); // db9_pin_7, db9_pin_1, db9_pin_2, db9_pin_3, db9_pin_4, db9_pin_6, db9_pin_9
-  word joy_current_state = 0;
-  word joy_last_state = 0;
-#else 
-#define JOY_UP 5    
-#define JOY_DOWN 6  
-#define JOY_LEFT 7  
-#define JOY_RIGHT 8 
-#define JOY_FIRE 9 
-#define JOY_FIRE2 3
-#define JOY_FIRE3 4
-#endif
-
-#define EEPROM_TURBO_ADDRESS 0x00
-#define EEPROM_ROMBANK_ADDRESS 0x01
-
-#define EEPROM_VALUE_TRUE 10
-#define EEPROM_VALUE_FALSE 20
-
 PS2KeyRaw kbd;
 
-bool matrix[ZX_MATRIX_FULL_SIZE]; // matrix of pressed keys + special keys to be transmitted on CPLD side by SPI protocol
+#if JOYTYPE==JOY_SEGA
+  #include "SegaController.h" // https://github.com/jonthysell/SegaController/
+  SegaController joystick(JOY_FIRE3, JOY_UP, JOY_DOWN, JOY_LEFT, JOY_RIGHT, JOY_FIRE, JOY_FIRE2); // db9_pin_7, db9_pin_1, db9_pin_2, db9_pin_3, db9_pin_4, db9_pin_6, db9_pin_9
+  word joy_current_state = 0;
+  word joy_last_state = 0;
+#endif
 
-bool blink_state = false;
+SPISettings settingsA(8000000, MSBFIRST, SPI_MODE0); // SPI transmission settings
+
+bool matrix[ZX_MATRIX_FULL_SIZE]; // matrix of pressed keys + special keys to be transmitted on CPLD side by SPI protocol
 
 bool is_turbo = false;
 bool is_wait = false;
 byte rom_bank = 0x0;
 
 unsigned long t = 0;  // current time
-unsigned long tl = 0; // blink poll time
+unsigned long tl = 0; // led poll time
 unsigned long te = 0; // eeprom store time
 
-SPISettings settingsA(8000000, MSBFIRST, SPI_MODE0); // SPI transmission settings
+void fill_kbd_matrix(int sc);
+uint8_t get_matrix_byte(uint8_t pos);
+void spi_send(uint8_t addr, uint8_t data);
+void transmit_keyboard_matrix();
+void send_macros(uint8_t pos);
+void do_reset();
+void do_magick();
+void set_rombank(byte bank);
+void clear_matrix(int clear_size);
+bool eeprom_restore_bool(int addr, bool default_value);
+byte eeprom_restore_byte(int addr, byte default_value);
+void eeprom_store_bool(int addr, bool value);
+void eeprom_store_byte(int addr, byte value);
+void eeprom_restore_values();
+void eeprom_store_values();
+void setup();
+void loop();
+
 
 // transform PS/2 scancodes into internal matrix of pressed keys
 void fill_kbd_matrix(int sc)
 {
 
   static bool is_up=false, is_e=false, is_e1=false;
-  static bool is_ctrl=false, is_alt=false, is_del=false, is_bksp = false, is_shift = false, is_esc = false, is_ss_used = false, is_cs_used = false;
+  static bool is_ctrl=false, is_alt=false, is_del=false, is_bksp = false, is_shift = false, is_ss_used = false, is_cs_used = false;
 
   // is extended scancode prefix
   if (sc == 0xE0) {
@@ -181,7 +159,6 @@ void fill_kbd_matrix(int sc)
       matrix[ZX_K_CS] = !is_up;
       matrix[ZX_K_SP] = !is_up;
       is_cs_used = !is_up;
-      is_esc = !is_up;
       break;
 
     // Backspace -> CS+0
@@ -567,8 +544,10 @@ void spi_send(uint8_t addr, uint8_t data)
 {
       SPI.beginTransaction(settingsA);
       digitalWrite(PIN_SS, LOW);
-      uint8_t cmd = SPI.transfer(addr); // command (1...6)
-      uint8_t res = SPI.transfer(data); // data byte
+      //uint8_t cmd = SPI.transfer(addr); // command (1...6)
+      //uint8_t res = SPI.transfer(data); // data byte
+      SPI.transfer(addr); // command (1...6)
+      SPI.transfer(data); // data byte
       digitalWrite(PIN_SS, HIGH);
       SPI.endTransaction();
 }
@@ -717,7 +696,6 @@ void setup()
   pinMode(JOY_FIRE3, INPUT_PULLUP);
 #endif
 
-  
   digitalWrite(LED_PWR, HIGH);
   digitalWrite(LED_KBD, HIGH);
   digitalWrite(LED_TURBO, LOW);
@@ -745,7 +723,6 @@ void setup()
   kbd.begin(PIN_KBD_DAT, PIN_KBD_CLK);
 
   digitalWrite(LED_KBD, LOW);
-  
 }
 
 
@@ -794,7 +771,6 @@ void loop()
     digitalWrite(LED_TURBO, is_turbo ? HIGH : LOW);
     digitalWrite(LED_PAUSE, is_wait ? HIGH: LOW);
     digitalWrite(LED_ROMBANK, rom_bank != 0 ? HIGH : LOW);
-    blink_state = !blink_state;
     tl = n;
   }
 }

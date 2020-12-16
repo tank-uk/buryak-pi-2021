@@ -102,6 +102,4 @@
 #define CMD_KBD_BYTE6 0x06
 #define CMD_KBD_BYTE7 0x07
 
-#define CMD_NONE 0xFF
-
 #endif
