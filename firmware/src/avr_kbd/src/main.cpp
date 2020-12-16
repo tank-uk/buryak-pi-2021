@@ -770,6 +770,7 @@ void loop()
     digitalWrite(LED_KBD, LOW);
     digitalWrite(LED_TURBO, is_turbo ? HIGH : LOW);
     digitalWrite(LED_PAUSE, is_wait ? HIGH: LOW);
+    digitalWrite(AUDIO_OFF, is_wait ? HIGH: LOW);
     digitalWrite(LED_ROMBANK, rom_bank != 0 ? HIGH : LOW);
     tl = n;
   }
