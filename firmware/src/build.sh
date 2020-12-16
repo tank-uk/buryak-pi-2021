@@ -9,7 +9,7 @@ cd avr_kbd
 pio run -t clean
 pio run
 
-cp .pio/build/ATmega8/firmware.hex ../../releases/avr_kbd.hex
+cp .pio/build/ATmega8/firmware.hex ../../release/avr_kbd.hex
 
 pio run -t clean
 
@@ -25,7 +25,7 @@ make clean
 make all
 make jic
 
-cp firmware_top.jic ../../../releases/firmware.jic
+cp firmware_top.jic ../../../release/firmware.jic
 
 make clean
 
