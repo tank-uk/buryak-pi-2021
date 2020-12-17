@@ -227,7 +227,7 @@ begin
 	
 	N_NMI <= '0' when nmi = '0' else '1';
 	areset <= not locked;
-	N_RESET <= '0' when areset = '1' or reset = '0' else 'Z';
+	N_RESET <= '0' when areset = '1' or reset = '0' or loader_reset = '1' or loader_act = '1' else 'Z';
 
 	--N_NMI <= '0' when nmi = '0' else '1';
 	--N_RESET <= '0' when reset = '0' else 'Z';

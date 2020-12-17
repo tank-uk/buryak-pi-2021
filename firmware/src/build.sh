@@ -1,6 +1,6 @@
 #!/bin/sh
 
-export PATH=/opt/altera/quartus/bin:.platformio/penv/bin:$PATH
+export PATH=/opt/altera/quartus/bin:$HOME/.platformio/penv/bin:$PATH
 
 echo "Building AVR sources"
 
