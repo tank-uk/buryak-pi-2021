@@ -218,7 +218,7 @@ begin
 	divmmc_rom <= '1' when (divmmc_disable_zxrom = '1' and divmmc_eeprom_cs_n = '0') else '0';
 	divmmc_ram <= '1' when (divmmc_disable_zxrom = '1' and divmmc_sram_cs_n = '0') else '0';
 	
-	BEEPER_L <= sound_out;
+	BEEPER_L <= sound_out; -- TODO: covox, soundrive, turbosound, etc...
 	BEEPER_R <= sound_out;
 
 	ay_port <= '1' when A(7 downto 0) = x"FD" and A(15)='1' and fd_port = '1' else '0';
@@ -543,9 +543,9 @@ begin
 	);	
 	
 	-- Share VGA connector between RGB / VGA modes
-	VGA_R <= vga_red when enable_vga else rgb(2) & i;
-	VGA_G <= vga_green when enable_vga else rgb(1) & i;
-	VGA_B <= vga_blue when enable_vga else rgb(0) & i;
+	VGA_R <= vga_red(0) & vga_red(1) when enable_vga else rgb(2) & i;
+	VGA_G <= vga_green(0) & vga_green(1) when enable_vga else rgb(1) & i;
+	VGA_B <= vga_blue(0) & vga_blue(1) when enable_vga else rgb(0) & i;
 	VGA_HSYNC <= hsync_vga when enable_vga else hsync xor (not vsync);
 	VGA_VSYNC <= vsync_vga when enable_vga else hsync xor (not vsync);
 	

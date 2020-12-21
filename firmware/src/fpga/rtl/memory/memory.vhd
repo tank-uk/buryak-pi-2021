@@ -82,8 +82,8 @@ architecture RTL of memory is
 
 begin
 
-	is_rom <= '1' when N_MREQ = '0' and ((A(15 downto 14)  = "00" and IS_DIVMMC_ROM = '0' and IS_DIVMMC_RAM = '0') or IS_DIVMMC_ROM = '1') else '0';
-	is_ram <= '1' when N_MREQ = '0' and ((A(15 downto 14) /= "00" and IS_DIVMMC_ROM = '0' and IS_DIVMMC_RAM = '0') or IS_DIVMMC_RAM = '1') else '0';
+	is_rom <= '1' when N_MREQ = '0' and ((A(15 downto 14)  = "00" and (not(enable_divmmc) or (IS_DIVMMC_ROM = '0' and IS_DIVMMC_RAM = '0'))) or (enable_divmmc and IS_DIVMMC_ROM = '1')) else '0';
+	is_ram <= '1' when N_MREQ = '0' and ((A(15 downto 14) /= "00" and (not(enable_divmmc) or (IS_DIVMMC_ROM = '0' and IS_DIVMMC_RAM = '0'))) or (enable_divmmc and IS_DIVMMC_RAM = '1')) else '0';
 	
 	-- 00 - bank 0, ESXDOS 0.8.7 or GLUK
 	-- 01 - bank 1, empty or TRDOS
@@ -111,27 +111,21 @@ begin
 	N_OE <= '0' when (is_ram = '1' or is_rom = '1') and N_RD = '0' else '1';
 		
 	ram_page <=	
-				"11" & DIVMMC_A(5 downto 1) when IS_DIVMMC_RAM = '1' else -- 512k divmmc ram
+				"11" & DIVMMC_A(5 downto 1) when IS_DIVMMC_RAM = '1' and enable_divmmc else -- 512k divmmc ram
 				"10" & EXT_ROM_BANK(2 downto 0) & rom_page(1 downto 0) when is_rom = '1' and vbus_mode = '0' else -- 8x64k roms
 				"0000000" when A(15) = '0' and A(14) = '0' else
 				"0000101" when A(15) = '0' and A(14) = '1' else
 				"0000010" when A(15) = '1' and A(14) = '0' else
 				"0" & RAM_EXT(2 downto 0) & RAM_BANK(2 downto 0);
 
-	MA(13 downto 0) <= 
-		loader_ram_a(13 downto 0) when loader_act = '1' else -- loader ram
-		DIVMMC_A(0) & A(12 downto 0) when vbus_mode = '0' and IS_DIVMMC_RAM = '1' else -- divmmc ram 
-		DIVMMC_A(0) & A(12 downto 0) when vbus_mode = '0' and IS_DIVMMC_ROM = '1' else -- divmmc rom
-		A(13 downto 0) when vbus_mode = '0' else -- spectrum ram 
-		VA; -- video ram
-
-	MA(20 downto 14) <= loader_ram_a(20 downto 14) when loader_act = '1' else -- loader ram
-								ram_page(6 downto 0) when vbus_mode = '0' else 
-								"00001" & VID_PAGE & '1';
+	MA(20 downto 0) <= loader_ram_a(20 downto 0) when loader_act = '1' else -- loader ram
+		ram_page(6 downto 0) & DIVMMC_A(0) & A(12 downto 0) when vbus_mode = '0' and (enable_divmmc and (IS_DIVMMC_RAM = '1' or IS_DIVMMC_ROM = '1')) else -- divmmc ram
+		ram_page(6 downto 0) & A(13 downto 0) when vbus_mode = '0' and IS_DIVMMC_RAM = '0' and IS_DIVMMC_ROM = '0' else -- spectrum ram 
+		"00001" & VID_PAGE & '1' & VA(13 downto 0); -- video ram		
 	
 	MD(7 downto 0) <= 
 		loader_ram_do when loader_act = '1' else -- loader DO
-		D(7 downto 0) when vbus_mode = '0' and ((is_ram = '1' or (N_IORQ = '0' and N_M1 = '1')) and N_WR = '0') else 
+		D(7 downto 0) when vbus_mode = '0' and ((is_ram = '1' or (N_IORQ = '0' and N_M1 = '1')) and N_WR = '0') else -- cpu DO
 		(others => 'Z');
 		
 	-- fill memory buf

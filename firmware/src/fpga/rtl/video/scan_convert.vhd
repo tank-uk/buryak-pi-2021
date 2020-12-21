@@ -104,17 +104,17 @@ begin
 
 	LINEBUF: entity work.linebuf
 	port map (
-		address_a => hpos_i & '0',
-		clock_a 	 => CLK,
-		data_a 	 => WR_REG & '0',
+		address_a => hpos_i,
+		clock_a 	 => CLK_x2 and CLK,
+		data_a 	 => WR_REG,
 		wren_a 	 => '1',
 		q_a 		 => open,
 		
-		address_b => hpos_o & '0',
-		clock_b 	 => CLK_x2,
+		address_b => hpos_o,
+		clock_b 	 => not(CLK_x2 and CLK),
 		data_b 	 => (others => '1'),
 		wren_b 	 => '0',
-		q_b(7 downto 0) => RD_REG
+		q_b 		 => RD_REG
 	);
 
 	process (CLK_x2, CLK, hpos_i) 
