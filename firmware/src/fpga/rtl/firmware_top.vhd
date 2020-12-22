@@ -93,7 +93,6 @@ architecture rtl of firmware_top is
 	signal video_g 	: std_logic_vector(1 downto 0);
 	signal video_b 	: std_logic_vector(1 downto 0);
 	signal blink 		: std_logic := '0';
-	signal enable_vga : std_logic := '1';
 	
 	signal border_attr: std_logic_vector(2 downto 0) := "000";
 
@@ -267,7 +266,7 @@ begin
 		ram_do when ram_oe_n = '0' else -- #memory
 		port_7ffd when port_read = '1' and A = X"7FFD" else  -- #7FFD - system port 
 		"00000" & ram_ext when port_read = '1' and A = X"DFFD" else  -- #DFFD - system port 
-		"111" & kb(4 downto 0) when port_read = '1' and A(0) = '0' else -- #FE - keyboard 
+		'1' & TAPE_IN & '1' & kb(4 downto 0) when port_read = '1' and A(0) = '0' else -- #FE - keyboard 
 		"000" & joy when port_read = '1' and A(7 downto 0) = X"1F" else -- #1F - kempston joy
 		divmmc_do when divmmc_wr = '1' else 									 -- divMMC
 		zc_do_bus when port_read = '1' and A(7 downto 6) = "01" and A(4 downto 0) = "10111" and enable_zcontroller else -- Z-controller
@@ -334,6 +333,7 @@ begin
 					-- port #FE
 					if A(0) = '0' then
 						border_attr <= D(2 downto 0); -- border attr
+						TAPE_OUT <= D(3);
 						sound_out <= D(4); -- BEEPER
 					end if;				
 					
@@ -365,11 +365,9 @@ begin
 		enable_zcontroller => enable_zcontroller
 	)
 	port map (
-		CLK28 => CLK_28,
-		CLK14 => CLK_14,
-		CLK7  => CLK_7,
-		HCNT0 => hcnt(0),
-		TURBO => turbo,
+		CLK2X => CLK_28,
+		CLKX => CLK_14,
+		CLK_CPU  => clkcpu,
 		
 		-- loader signals
 		loader_act 		=> loader_act,
@@ -533,7 +531,7 @@ begin
 		SSI_IN 			=> hsync,
 		CLK 				=> CLK_14,
 		CLK2 				=> CLK_28,
-		EN 				=> enable_vga,
+		EN 				=> '1',
 		DS80				=> '0',
 		RGB_O(5 downto 4)	=> VGA_R,
 		RGB_O(3 downto 2)	=> VGA_G,

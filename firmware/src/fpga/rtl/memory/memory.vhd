@@ -9,11 +9,9 @@ generic (
 		enable_zcontroller : boolean := false
 );
 port (
-	CLK28 		: in std_logic;
-	CLK14	   	: in std_logic;
-	CLK7			: in std_logic;
-	HCNT0 		: in std_logic;
-	TURBO 		: in std_logic;
+	CLK2X 		: in std_logic;
+	CLKX	   	: in std_logic;
+	CLK_CPU 		: in std_logic;
 
 	loader_act 	: in std_logic := '0';
 	loader_ram_a: in std_logic_vector(20 downto 0);
@@ -71,14 +69,7 @@ architecture RTL of memory is
 	signal vbus_mode	: std_logic := '1';	
 	signal vbus_rdy	: std_logic := '1';
 	signal vid_rd 		: std_logic := '0';
-	
-	signal vbus_ack1 	: std_logic := '1';
-	signal vbus_mode1 : std_logic := '1';
-	signal vid_rd1 	: std_logic := '0';
-
-	signal vbus_ack2 	: std_logic := '1';
-	signal vbus_mode2 : std_logic := '1';
-	signal vid_rd2 	: std_logic := '0';
+	signal vbus_ack 	: std_logic := '1';
 
 begin
 
@@ -94,7 +85,7 @@ begin
 		'1' & ROM_BANK;
 		
 	vbus_req <= '0' when ( N_MREQ = '0' or N_IORQ = '0' ) and ( N_WR = '0' or N_RD = '0' ) else '1';
-	vbus_rdy <= '0' when (TURBO = '0' and (CLK7 = '0' or HCNT0 = '0')) or (TURBO = '1' and (CLK14 = '0' or CLK7='0'))  else '1';
+	vbus_rdy <= '0' when (CLKX = '0' or CLK_CPU = '0')  else '1';
 
 	VBUS_MODE_O <= vbus_mode;
 	VID_RD_O <= vid_rd;
@@ -103,9 +94,9 @@ begin
 				'0' when (is_rom = '1' and N_RD = '0') or (vbus_mode = '1' and vbus_rdy = '0') or (vbus_mode = '0' and N_RD = '0' and N_MREQ = '0') else '1';  
 				
 	N_MWR <= not loader_ram_wr when loader_act = '1' else 
-				'0' when vbus_mode = '0' and is_ram = '1' and N_WR = '0' and ((TURBO = '0' and HCNT0 = '0') or (TURBO = '1' AND CLK7 = '0')) else '1';
+				'0' when vbus_mode = '0' and is_ram = '1' and N_WR = '0' and CLK_CPU = '0' else '1';
 
-	is_buf_wr <= '1' when vbus_mode = '0' and ((TURBO = '0' and HCNT0 = '0') or (TURBO = '1' and CLK7 = '0')) else '0';
+	is_buf_wr <= '1' when vbus_mode = '0' and CLK_CPU = '0' else '0';
 	
 	DO <= buf_md;
 	N_OE <= '0' when (is_ram = '1' or is_rom = '1') and N_RD = '0' else '1';
@@ -137,40 +128,21 @@ begin
 	end process;	
 	
 	-- video mem
-	process( CLK14, CLK7, HCNT0, vbus_mode1, vid_rd1, vbus_req, vbus_ack1, TURBO )
-	begin
-		-- lower edge of 7 mhz clock
-		if CLK14'event and CLK14 = '1' then 
-			if (HCNT0 = '1' and CLK7 = '0' and TURBO = '0') then
-				if vbus_req = '0' and vbus_ack1 = '1' then
-					vbus_mode1 <= '0';
-				else
-					vbus_mode1 <= '1';
-					vid_rd1 <= not vid_rd1;
-				end if;	
-				vbus_ack1 <= vbus_req;
-			end if;		
-		end if;		
-	end process;
-
-	process( CLK28, CLK14, CLK7, HCNT0, vbus_mode2, vid_rd2, vbus_req, vbus_ack2, TURBO )
+	process( CLK2X, CLKX, vbus_mode, vbus_req, vbus_ack )
 	begin
 		-- lower edge of 14 mhz clock
-		if CLK28'event and CLK28 = '1' then 
-			if (CLK7 = '1' and CLK14 = '0' and TURBO = '1') then
-				if vbus_req = '0' and vbus_ack2 = '1' then
-					vbus_mode2 <= '0';
+		if CLK2X'event and CLK2X = '1' then 
+			if (CLKX = '0') then
+				if vbus_req = '0' and vbus_ack = '1' then
+					vbus_mode <= '0';
 				else
-					vbus_mode2 <= '1';
-					vid_rd2 <= not vid_rd2;
+					vbus_mode <= '1';
+					vid_rd <= not vid_rd;
 				end if;	
-				vbus_ack2 <= vbus_req;
+				vbus_ack <= vbus_req;
 			end if;		
 		end if;		
 	end process;
-	
-	vbus_mode <= vbus_mode1 when TURBO = '0' else vbus_mode2;
-	vid_rd <= vid_rd1 when TURBO = '0' else vid_rd2;
 	
 end RTL;
 
