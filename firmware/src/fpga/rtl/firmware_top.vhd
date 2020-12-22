@@ -6,6 +6,7 @@
 
 library IEEE;
 use IEEE.std_logic_1164.all;
+use IEEE.std_logic_unsigned.all;
 use IEEE.numeric_std.all;
 
 entity firmware_top is
@@ -85,6 +86,13 @@ architecture rtl of firmware_top is
 	signal clk_14 		: std_logic := '0';
 	signal clk_7 		: std_logic := '0';
 	signal clkcpu 		: std_logic := '1';
+	
+	signal ena_div2	: std_logic := '0';
+	signal ena_div4	: std_logic := '0';
+	signal ena_div8	: std_logic := '0';
+	signal ena_div16	: std_logic := '0';
+	signal ena_div32	: std_logic := '0';
+	signal ena_cnt		: std_logic_vector(5 downto 0) := "000000";
 
 	signal attr_r   	: std_logic_vector(7 downto 0);
 	signal vid_a 		: std_logic_vector(13 downto 0);
@@ -170,6 +178,7 @@ architecture rtl of firmware_top is
 	signal cs_dffd : std_logic := '0';
 	signal cs_7ffd : std_logic := '0';
 	signal cs_xxfd : std_logic := '0';
+	signal cs_fe   : std_logic := '0';
 	
 	-- Loader
 	signal loader_act		: std_logic := '1';
@@ -243,19 +252,23 @@ begin
 				  fd_port <= fd_sel;
 			end if;
 	 end process;
-
-	-- CPU clock 
-	process( N_RESET, clk_28, clk_14, clk_7, hcnt )
+	 
+	 -- dividers
+	process (clk_28)
 	begin
-		if clk_14'event and clk_14 = '1' then
-			if (turbo = '1') then
-				clkcpu <= clk_7;
-			elsif clk_7 = '1' then
-				clkcpu <= hcnt(0);
-			end if;
+		if clk_28'event and clk_28 = '0' then
+			ena_cnt <= ena_cnt + 1;
 		end if;
 	end process;
-	
+
+	ena_div2 <= ena_cnt(0);
+	ena_div4 <= ena_cnt(1) and ena_cnt(0);
+	ena_div8 <= ena_cnt(2) and ena_cnt(1) and ena_cnt(0);
+	ena_div16 <= ena_cnt(3) and ena_cnt(2) and ena_cnt(1) and ena_cnt(0);
+	ena_div32 <= ena_cnt(5) and ena_cnt(4) and ena_cnt(3) and ena_cnt(2) and ena_cnt(1) and ena_cnt(0);
+
+	-- CPU clock 
+	clkcpu <= clk_28 and ena_div8 when turbo = '1' else clk_28 and ena_div4;
 	CPU_CLK <= clkcpu;
 	
 	port_write <= '1' when N_IORQ = '0' and N_WR = '0' and N_M1 = '1' else '0';
@@ -301,21 +314,26 @@ begin
 	ram_ext <= '0' & port_7ffd(6) & port_7ffd(7) when ram_ext_std = 0 else 
 				  port_7ffd(5) & port_7ffd(6) & port_7ffd(7) when ram_ext_std = 1 else
 				  port_dffd(2 downto 0) when ram_ext_std = 2 else 
-				  "000";				  
-
+				  "000";	
+				  
+	cs_fe <= '1' when port_write='1' and A(0) = '0' and (N_WR'event and N_WR = '1');			
+	border_attr <= D(2 downto 0) when cs_fe = '1';
+	TAPE_OUT <= D(3) when cs_fe = '1';
+	sound_out <= D(4) when cs_fe = '1';
+	
 	-- ports, write by CPU
 	process( clk_28, clk_14, clk_7, N_RESET, A, D, port_write, port_7ffd, N_M1, N_MREQ )
 	begin
 		if N_RESET = '0' then
 			port_7ffd <= "00000000";
-			sound_out <= '0';
+			--sound_out <= '0';
 			if (enable_zcontroller) then 
 				trdos <= '1'; -- 1 - boot into service rom, 0 - boot into 128 menu
 			else 
 				trdos <= '0';
 			end if;
 		elsif clk_28'event and clk_28 = '1' then 
-			if clk_14 = '1' and (TURBO = '1' or clk_7 = '1') then
+--			if clk_14 = '1' and (TURBO = '1' or clk_7 = '1') then
 				if port_write = '1' then
 
 					 -- port #7FFD  
@@ -331,11 +349,11 @@ begin
 					end if;
 					
 					-- port #FE
-					if A(0) = '0' then
-						border_attr <= D(2 downto 0); -- border attr
-						TAPE_OUT <= D(3);
-						sound_out <= D(4); -- BEEPER
-					end if;				
+--					if A(0) = '0' then
+--						border_attr <= D(2 downto 0); -- border attr
+--						TAPE_OUT <= D(3);
+--						sound_out <= D(4); -- BEEPER
+--					end if;				
 					
 				end if;
 				
@@ -346,7 +364,7 @@ begin
 					trdos <= '0'; 
 				end if;
 				
-			end if;
+--			end if;
 		end if;
 	end process;	
 
