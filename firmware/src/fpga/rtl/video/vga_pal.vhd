@@ -29,7 +29,7 @@ entity VGA_PAL is
 --                 ВХОДНЫЕ СИГНАЛЫ ПЛИС СО СПЕКТРУМА                  091103  --
 --------------------------------------------------------------------------------
 
-RGB_IN 		: in std_logic_vector(8 downto 0); -- RRRGGGBBB
+RGB_IN 		: in std_logic_vector(5 downto 0); -- RRGGBB
 DS80			: in std_logic := '0';
 KSI_IN      : in std_logic := '1'; -- кадровые синхроимпульсы
 SSI_IN      : in std_logic := '1'; -- строчные синхроимпульсы
@@ -41,7 +41,7 @@ EN 			: in std_logic := '1'; -- включен ли даблер или отда
 --                     ВЫХОДНЫЕ ПОРТЫ ПЛИС ДЛЯ VGA                    090728  --
 --------------------------------------------------------------------------------
 
-RGB_O 	  : out std_logic_vector(8 downto 0) := (others => '0'); -- VGA RGB
+RGB_O 	  : out std_logic_vector(5 downto 0) := (others => '0'); -- VGA RGB
 VSYNC_VGA  : out std_logic := '1'; -- кадровые синхроимпульсы
 HSYNC_VGA  : out std_logic := '1' -- строчные синхроимпульсы
 
@@ -56,7 +56,7 @@ architecture RTL of VGA_PAL is
 --                   НОРМАЛИЗОВАННЫЕ ВХОДНЫЕ СИГНАЛЫ                  090805  --
 --------------------------------------------------------------------------------
 
-signal RGB 	  : std_logic_vector(8 downto 0);
+signal RGB 	  : std_logic_vector(5 downto 0);
 signal RGBI_CLK : std_logic; -- тактовый сигнал входного кода цвета
 
 signal KSI    : std_logic; -- кадровые синхроимпульсы
@@ -156,7 +156,7 @@ signal VIDEO_BLANK  : std_logic; -- гасящие импульсы для VIDEO
 --                РЕГИСТР ДЛЯ ЧТЕНИЯ ТОЧКИ В ОЗУ            			 090821  --
 --------------------------------------------------------------------------------
 
-signal RD_REG       : std_logic_vector(8 downto 0);
+signal RD_REG       : std_logic_vector(5 downto 0);
 
 begin
 

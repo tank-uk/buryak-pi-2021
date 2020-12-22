@@ -15,10 +15,8 @@ entity firmware_top is
 																      -- 1 - pentagon-1024 via 5,6,7 bits of the #7FFD port (no 48k lock)
 																      -- 2 - profi-1024 via 0,1,2 bits of the #DFFD port
 																      -- 3 - pentagon-128
-		enable_timex	    : boolean := true;
 		enable_divmmc 	    : boolean := true;
-		enable_zcontroller : boolean := false;
-		enable_vga 		    : boolean := true
+		enable_zcontroller : boolean := false
 	);
 	port(
 		-- Clock
@@ -89,14 +87,14 @@ architecture rtl of firmware_top is
 	signal clkcpu 		: std_logic := '1';
 
 	signal attr_r   	: std_logic_vector(7 downto 0);
-	signal rgb 	 		: std_logic_vector(2 downto 0);
-	signal i 			: std_logic;
 	signal vid_a 		: std_logic_vector(13 downto 0);
-	signal hcnt0 		: std_logic;
 	
-	signal timexcfg_reg : std_logic_vector(5 downto 0);
-	signal is_port_ff : std_logic := '0';	
-
+	signal video_r 	: std_logic_vector(1 downto 0);
+	signal video_g 	: std_logic_vector(1 downto 0);
+	signal video_b 	: std_logic_vector(1 downto 0);
+	signal blink 		: std_logic := '0';
+	signal enable_vga : std_logic := '1';
+	
 	signal border_attr: std_logic_vector(2 downto 0) := "000";
 
 	signal port_7ffd	: std_logic_vector(7 downto 0); -- D0-D2 - RAM page from address #C000
@@ -122,6 +120,9 @@ architecture rtl of firmware_top is
 	
 	signal hsync     	: std_logic := '1';
 	signal vsync     	: std_logic := '1';
+	
+	signal hcnt 		: std_logic_vector(9 downto 0);
+	signal vcnt 		: std_logic_vector(8 downto 0);	
 
 	signal sound_out 	: std_logic := '0';
 	signal port_read	: std_logic := '0';
@@ -245,13 +246,13 @@ begin
 	 end process;
 
 	-- CPU clock 
-	process( N_RESET, clk_28, clk_14, clk_7, hcnt0 )
+	process( N_RESET, clk_28, clk_14, clk_7, hcnt )
 	begin
 		if clk_14'event and clk_14 = '1' then
 			if (turbo = '1') then
 				clkcpu <= clk_7;
 			elsif clk_7 = '1' then
-				clkcpu <= hcnt0;
+				clkcpu <= hcnt(0);
 			end if;
 		end if;
 	end process;
@@ -270,8 +271,7 @@ begin
 		"000" & joy when port_read = '1' and A(7 downto 0) = X"1F" else -- #1F - kempston joy
 		divmmc_do when divmmc_wr = '1' else 									 -- divMMC
 		zc_do_bus when port_read = '1' and A(7 downto 6) = "01" and A(4 downto 0) = "10111" and enable_zcontroller else -- Z-controller
-		"00" & timexcfg_reg when enable_timex and port_read = '1' and A(7 downto 0) = x"FF" and is_port_ff = '1' else -- #FF (timex config)
-		attr_r when port_read = '1' and A(7 downto 0) = x"FF" and is_port_ff = '0' else -- #FF - attributes (timex port never set)
+		attr_r when port_read = '1' and A(7 downto 0) = x"FF" else -- #FF - attributes
 		"ZZZZZZZZ";
 
 	divmmc_enable <= '1' when enable_divmmc and SD_NDET = '0' else '0';
@@ -310,8 +310,6 @@ begin
 		if N_RESET = '0' then
 			port_7ffd <= "00000000";
 			sound_out <= '0';
-			timexcfg_reg <= (others => '0');
-			is_port_ff <= '0';
 			if (enable_zcontroller) then 
 				trdos <= '1'; -- 1 - boot into service rom, 0 - boot into 128 menu
 			else 
@@ -337,13 +335,7 @@ begin
 					if A(0) = '0' then
 						border_attr <= D(2 downto 0); -- border attr
 						sound_out <= D(4); -- BEEPER
-					end if;
-					
-					-- port FF / timex CFG
-					if (A(7 downto 0) = X"FF" and enable_timex and trdos = '0') then 
-						timexcfg_reg(5 downto 0) <= D(5 downto 0);
-						is_port_ff <= '1';
-					end if;
+					end if;				
 					
 				end if;
 				
@@ -376,7 +368,7 @@ begin
 		CLK28 => CLK_28,
 		CLK14 => CLK_14,
 		CLK7  => CLK_7,
-		HCNT0 => hcnt0,
+		HCNT0 => hcnt(0),
 		TURBO => turbo,
 		
 		-- loader signals
@@ -502,52 +494,53 @@ begin
 	-- video module
 	U6: entity work.video 
 	port map (
+		CLK2x => CLK_28,
 		CLK => CLK_14,
-		CLK28 => CLK_28,
-		ENA7 => CLK_7,
+		ENA => CLK_7,
+		RESET => not(reset),
+		
 		BORDER => border_attr,
-		TIMEXCFG => timexcfg_reg,
 		DI => MD,
 		TURBO => turbo,
 		INTA => N_IORQ or N_M1,
+		MODE60 => '0',
 		INT => N_INT,
 		ATTR_O => attr_r, 
+		pFF_CS => open,
 		A => vid_a,
-		BLANK => open,
-		RGB => rgb,
-		I => i,
+		
+		VIDEO_R => video_r,
+		VIDEO_G => video_g,
+		VIDEO_B => video_b,
+
 		HSYNC => hsync,
 		VSYNC => vsync,
+
+		HCNT => hcnt,
+		VCNT => vcnt,
+		
+		BLINK => blink,
+
 		VBUS_MODE => vbus_mode,
-		VID_RD => vid_rd,
-		HCNT0 => hcnt0
+		VID_RD => vid_rd
 	);
 	
-	-- scandoubler
-	U7: entity work.scan_convert 
+	-- Scandoubler	
+	U7: entity work.vga_pal 
 	port map (
-		I_VIDEO => rgb & i,
-		
-      I_HSYNC => hsync,
-		I_VSYNC => vsync,
-		
-		CLK_x2 => CLK_28,
-		CLK => not(CLK_14),
-		
-		O_RED => vga_red,
-		O_GREEN => vga_green,
-		O_BLUE => vga_blue,
-
-		O_HSYNC => hsync_vga,
-		O_VSYNC => vsync_vga		
+		RGB_IN 			=> video_r(0) & video_r(1) & video_g(0) & video_g(1) & video_b(0) & video_b(1),
+		KSI_IN 			=> vsync,
+		SSI_IN 			=> hsync,
+		CLK 				=> CLK_14,
+		CLK2 				=> CLK_28,
+		EN 				=> enable_vga,
+		DS80				=> '0',
+		RGB_O(5 downto 4)	=> VGA_R,
+		RGB_O(3 downto 2)	=> VGA_G,
+		RGB_O(1 downto 0)	=> VGA_B,
+		VSYNC_VGA		=> VGA_VSYNC,
+		HSYNC_VGA		=> VGA_HSYNC
 	);	
-	
-	-- Share VGA connector between RGB / VGA modes
-	VGA_R <= vga_red(0) & vga_red(1) when enable_vga else rgb(2) & i;
-	VGA_G <= vga_green(0) & vga_green(1) when enable_vga else rgb(1) & i;
-	VGA_B <= vga_blue(0) & vga_blue(1) when enable_vga else rgb(0) & i;
-	VGA_HSYNC <= hsync_vga when enable_vga else hsync xor (not vsync);
-	VGA_VSYNC <= vsync_vga when enable_vga else hsync xor (not vsync);
 	
 	-- osd (debug)
 --	U8: entity work.osd

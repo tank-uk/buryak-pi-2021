@@ -180,6 +180,7 @@ set_location_assignment PIN_80 -to VGA_G[0]
 set_location_assignment PIN_77 -to VGA_R[1]
 set_location_assignment PIN_76 -to VGA_R[0]
 set_location_assignment PIN_86 -to VGA_HSYNC
+set_location_assignment PIN_34 -to N_NMI
 set_global_assignment -name VHDL_FILE ../rtl/firmware_top.vhd
 set_global_assignment -name QIP_FILE ../rtl/pll/altpll0.qip
 set_global_assignment -name VHDL_FILE ../rtl/flash/flash.vhd
@@ -189,7 +190,7 @@ set_global_assignment -name VHDL_FILE ../rtl/spi/spi_master.vhd
 set_global_assignment -name VHDL_FILE ../rtl/memory/memory.vhd
 set_global_assignment -name VHDL_FILE ../rtl/avr/cpld_kbd.vhd
 set_global_assignment -name VHDL_FILE ../rtl/video/video.vhd
-set_global_assignment -name VHDL_FILE ../rtl/video/scan_convert.vhd
+set_global_assignment -name VHDL_FILE ../rtl/video/pentagon_video.vhd
 set_global_assignment -name VHDL_FILE ../rtl/video/vga_pal.vhd
 set_global_assignment -name QIP_FILE ../rtl/video/linebuf.qip
 set_global_assignment -name VHDL_FILE ../rtl/video/rgbi_6bit.vhd
@@ -200,4 +201,3 @@ set_global_assignment -name VHDL_FILE ../rtl/sd/zcontroller.vhd
 set_global_assignment -name SDC_FILE firmware_top.sdc
 set_global_assignment -name CDF_FILE firmware_top.cdf
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
-set_location_assignment PIN_34 -to N_NMI
