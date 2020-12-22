@@ -707,7 +707,8 @@ void setup()
   pinMode(PIN_KBD_CLK, INPUT_PULLUP);
   pinMode(PIN_KBD_DAT, INPUT_PULLUP);
 
-  // zx signals (output)
+  // nmi button
+  pinMode(PIN_BTN_NMI, INPUT_PULLUP);
 
   // clear full matrix
   clear_matrix(ZX_MATRIX_FULL_SIZE);
@@ -762,16 +763,22 @@ void loop()
   matrix[ZX_JOY_FIRE3] = digitalRead(JOY_FIRE3);
 #endif
 
+  if (digitalRead(PIN_BTN_NMI) == LOW) {
+    do_magick();
+  }
+
   // transmit kbd always
   transmit_keyboard_matrix();
 
   // update leds
   if (n - tl >= 200) {
     digitalWrite(LED_KBD, LOW);
-    digitalWrite(LED_TURBO, is_turbo ? HIGH : LOW);
-    digitalWrite(LED_PAUSE, is_wait ? HIGH: LOW);
-    digitalWrite(AUDIO_OFF, is_wait ? HIGH: LOW);
-    digitalWrite(LED_ROMBANK, rom_bank != 0 ? HIGH : LOW);
     tl = n;
   }
+
+  digitalWrite(LED_TURBO, is_turbo ? HIGH : LOW);
+  digitalWrite(LED_PAUSE, is_wait ? HIGH: LOW);
+  digitalWrite(AUDIO_OFF, is_wait ? HIGH: LOW);
+  digitalWrite(LED_ROMBANK, rom_bank != 0 ? HIGH : LOW);
+  
 }
