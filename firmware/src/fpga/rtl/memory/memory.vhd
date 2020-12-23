@@ -91,10 +91,14 @@ begin
 	VID_RD_O <= vid_rd;
 	
 	N_MRD <= '1' when loader_act = '1' else 
-				'0' when (is_rom = '1' and N_RD = '0') or (vbus_mode = '1' and vbus_rdy = '0') or (vbus_mode = '0' and N_RD = '0' and N_MREQ = '0') else '1';  
+				'0' when (is_rom = '1' and N_RD = '0') or 
+							(vbus_mode = '1' and vbus_rdy = '0') or 
+							(vbus_mode = '0' and N_RD = '0' and N_MREQ = '0') 
+					 else '1';  
 				
 	N_MWR <= not loader_ram_wr when loader_act = '1' else 
-				'0' when vbus_mode = '0' and is_ram = '1' and N_WR = '0' and CLK_CPU = '0' else '1';
+				'0' when vbus_mode = '0' and is_ram = '1' and N_WR = '0' and CLK_CPU = '0' 
+				 else '1';
 
 	is_buf_wr <= '1' when vbus_mode = '0' and CLK_CPU = '0' else '0';
 	

@@ -205,7 +205,7 @@ begin
 
 			if CLK = '1' then
 					-- standard shift register 
-					if TURBO = '1' or ENA = '1' then
+					if ENA = '1' then
 						if chr_col_cnt = 7 then
 							attr_r <= attr;
 							shift_r <= bitmap;

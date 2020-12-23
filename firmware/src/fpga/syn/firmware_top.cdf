@@ -4,7 +4,7 @@ JedecChain;
 	DefaultMfr(6E);
 
 	P ActionCode(Cfg)
-		Device PartName(EP4CE6) Path(".") File("firmware_top.jic") MfrSpec(OpMask(1) SEC_Device(EPCS16) Child_OpMask(1 1));
+		Device PartName(EP4CE6E22) Path("/home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/buryak-pi-2021/firmware/src/fpga/syn/") File("firmware_top.sof") MfrSpec(OpMask(1));
 
 ChainEnd;
 

@@ -268,7 +268,7 @@ begin
 	ena_div32 <= ena_cnt(5) and ena_cnt(4) and ena_cnt(3) and ena_cnt(2) and ena_cnt(1) and ena_cnt(0);
 
 	-- CPU clock 
-	clkcpu <= clk_28 and ena_div8 when turbo = '1' else clk_28 and ena_div4;
+	clkcpu <= clk_28 and ena_div4 when turbo = '1' else clk_28 and ena_div8;
 	CPU_CLK <= clkcpu;
 	
 	port_write <= '1' when N_IORQ = '0' and N_WR = '0' and N_M1 = '1' else '0';
@@ -316,11 +316,6 @@ begin
 				  port_dffd(2 downto 0) when ram_ext_std = 2 else 
 				  "000";	
 				  
-	cs_fe <= '1' when port_write='1' and A(0) = '0' and (N_WR'event and N_WR = '1');			
-	border_attr <= D(2 downto 0) when cs_fe = '1';
-	TAPE_OUT <= D(3) when cs_fe = '1';
-	sound_out <= D(4) when cs_fe = '1';
-	
 	-- ports, write by CPU
 	process( clk_28, clk_14, clk_7, N_RESET, A, D, port_write, port_7ffd, N_M1, N_MREQ )
 	begin
@@ -349,11 +344,11 @@ begin
 					end if;
 					
 					-- port #FE
---					if A(0) = '0' then
---						border_attr <= D(2 downto 0); -- border attr
---						TAPE_OUT <= D(3);
---						sound_out <= D(4); -- BEEPER
---					end if;				
+					if A(0) = '0' then
+						border_attr <= D(2 downto 0); -- border attr
+						TAPE_OUT <= D(3);
+						sound_out <= D(4); -- BEEPER
+					end if;				
 					
 				end if;
 				
@@ -377,7 +372,7 @@ begin
 	);
 	
 	-- memory arbiter
-	U2: entity work.memory 
+	U2: entity work.memory
 	generic map (
 		enable_divmmc => enable_divmmc,
 		enable_zcontroller => enable_zcontroller
