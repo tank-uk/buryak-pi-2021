@@ -17,19 +17,19 @@ echo "Done"
 
 cd ..
 
-echo "Building FPGA sources"
+echo "Building Speccy FPGA sources"
 
-cd fpga/syn
+cd fpga/speccy/syn
 
 make clean
 make all
 make jic
 
-cp firmware_top.jic ../../../release/firmware.jic
+cp firmware_top.jic ../../../../release/firmware_speccy.jic
 
 make clean
 
 echo "Done"
 
-cd ../../
+cd ../../../
 
