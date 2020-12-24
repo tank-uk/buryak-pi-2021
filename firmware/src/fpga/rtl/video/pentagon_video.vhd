@@ -144,10 +144,10 @@ begin
 	end process;
 
 	-- r/g/b/i
-	process( CLK2X, CLK, TURBO, ENA, paper_r, shift_r, attr_r, invert, blank_r, BORDER )
+	process( CLK2X, CLK, paper_r, shift_r, attr_r, invert, blank_r, BORDER )
 	begin
 		if CLK2X'event and CLK2X = '1' then
-		if CLK = '1' and (TURBO = '1' or ENA = '1') then
+		if CLK = '1' and ENA = '1' then
 			if paper_r = '0' then -- paper
 					-- standard RGB
 					if( shift_r(7) xor ( attr_r(7) and invert(4) ) ) = '1' then -- fg pixel

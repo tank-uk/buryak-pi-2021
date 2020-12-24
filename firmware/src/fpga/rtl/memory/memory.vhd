@@ -97,7 +97,7 @@ begin
 					 else '1';  
 				
 	N_MWR <= not loader_ram_wr when loader_act = '1' else 
-				'0' when vbus_mode = '0' and is_ram = '1' and N_WR = '0' and CLK_CPU = '0' 
+				'0' when vbus_mode = '0' and is_ram = '1' and N_WR = '0' --and CLK_CPU = '0' 
 				 else '1';
 
 	is_buf_wr <= '1' when vbus_mode = '0' and CLK_CPU = '0' else '0';
