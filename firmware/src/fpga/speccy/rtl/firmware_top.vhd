@@ -232,17 +232,6 @@ architecture rtl of firmware_top is
 	signal covox_c		: std_logic_vector(7 downto 0);
 	signal covox_d		: std_logic_vector(7 downto 0);
 
-	-- TurboSound
-	signal ssg_sel		: std_logic;
-	signal ssg0_do_bus	: std_logic_vector(7 downto 0);
-	signal ssg0_a		: std_logic_vector(7 downto 0);
-	signal ssg0_b		: std_logic_vector(7 downto 0);
-	signal ssg0_c		: std_logic_vector(7 downto 0);
-	signal ssg1_do_bus	: std_logic_vector(7 downto 0);
-	signal ssg1_a		: std_logic_vector(7 downto 0);
-	signal ssg1_b		: std_logic_vector(7 downto 0);
-	signal ssg1_c		: std_logic_vector(7 downto 0);
-
 	-- SAA1099
 	signal saa_wr_n		: std_logic;
 	signal saa_out_l	: std_logic_vector(7 downto 0);
@@ -533,30 +522,6 @@ port map (
 	O_COVOX_B	=> covox_b,
 	O_COVOX_C	=> covox_c,
 	O_COVOX_D	=> covox_d);
-	
--- TurboSound
-U12: entity work.turbosound
-port map (
-	I_CLK		=> clk_28,
-	I_ENA		=> ena_div16,
-	I_ADDR		=> A,
-	I_DATA		=> D,
-	I_WR_N		=> N_WR,
-	I_IORQ_N	=> N_IORQ,
-	I_M1_N		=> N_M1,
-	I_RESET_N	=> N_RESET,
-	I_MODE   => '1', -- AY
-	O_SEL		=> ssg_sel,
-	-- ssg0
-	O_SSG0_DA	=> ssg0_do_bus,
-	O_SSG0_AUDIO_A	=> ssg0_a,
-	O_SSG0_AUDIO_B	=> ssg0_b,
-	O_SSG0_AUDIO_C	=> ssg0_c,
-	-- ssg1
-	O_SSG1_DA	=> ssg1_do_bus,
-	O_SSG1_AUDIO_A	=> ssg1_a,
-	O_SSG1_AUDIO_B	=> ssg1_b,
-	O_SSG1_AUDIO_C	=> ssg1_c);
 
 -- saa
 U13: saa1099
@@ -665,8 +630,6 @@ D(7 downto 0) <=
 	'1' & TAPE_IN & '1' & kb(4 downto 0) when port_read = '1' and A(0) = '0' else -- #FE - keyboard 
 	"000" & joy when port_read = '1' and A(7 downto 0) = X"1F" else -- #1F - kempston joy
 	divmmc_do when divmmc_wr = '1' else 									 -- divMMC
-	ssg0_do_bus when port_read = '1' and A = X"FFFD" and ssg_sel = '0' else -- Turbosound 
-	ssg1_do_bus when port_read = '1' and A = X"FFFD" and ssg_sel = '1' else
 	zc_do_bus when port_read = '1' and A(7 downto 6) = "01" and A(4 downto 0) = "10111" and enable_zcontroller else -- Z-controller
 	attr_r when port_read = '1' and A(7 downto 0) = x"FF" else -- #FF - attributes
 	"ZZZZZZZZ";
@@ -752,18 +715,10 @@ end process;
 saa_wr_n <= '0' when (N_IORQ = '0' and N_WR = '0' and A(7 downto 0) = "11111111" and trdos = '0') else '1';
 
 audio_l	<= ("000" & sound_out & "000000000000") + 
-				("000" & ssg0_a & "00000") + 
-				("000" & ssg0_b & "00000") + 
-				("000" & ssg1_a & "00000") + 
-				("000" & ssg1_b & "00000") + 
 				("000" & covox_a & "00000") + 
 				("000" & covox_b & "00000") + 
 				("000" & saa_out_l & "00000");
 audio_r	<= ("000" & sound_out & "000000000000") + 
-				("000" & ssg0_c & "00000") + 
-				("000" & ssg0_b & "00000") + 
-				("000" & ssg1_c & "00000") + 
-				("000" & ssg1_b & "00000") + 
 				("000" & covox_c & "00000") + 
 				("000" & covox_d & "00000") + 
 				("000" & saa_out_r & "00000");
