@@ -10,15 +10,6 @@ use IEEE.std_logic_unsigned.all;
 use IEEE.numeric_std.all;
 
 entity firmware_top is
-	generic (
-		-- mark active area of input video
-		ram_ext_std        : integer range 0 to 3 := 3; -- 0 - pentagon-512 via 6,7 bits of the #7FFD port (bit 5 is for 48k lock)
-																      -- 1 - pentagon-1024 via 5,6,7 bits of the #7FFD port (no 48k lock)
-																      -- 2 - profi-1024 via 0,1,2 bits of the #DFFD port
-																      -- 3 - pentagon-128
-		enable_divmmc 	    : boolean := true;
-		enable_zcontroller : boolean := false
-	);
 	port(
 		-- Clock
 		CLK_50MHZ		: in std_logic;
@@ -114,6 +105,11 @@ architecture rtl of firmware_top is
 
 	signal port_dffd : std_logic_vector(2 downto 0); -- D0-D2 ram ext
 																	  
+	signal ram_ext_std : std_logic_vector(1 downto 0) := "11";  -- 0 - pentagon-512 via 6,7 bits of the #7FFD port (bit 5 is for 48k lock)
+																					-- 1 - pentagon-1024 via 5,6,7 bits of the #7FFD port (no 48k lock)
+																					-- 2 - profi-1024 via 0,1,2 bits of the #DFFD port
+																					-- 3 - pentagon-128
+	
 	signal ram_ext : std_logic_vector(2 downto 0) := "000";
 	signal ram_do : std_logic_vector(7 downto 0);
 	signal ram_oe_n : std_logic := '1';
@@ -153,6 +149,7 @@ architecture rtl of firmware_top is
 	signal divmmc_sd_di: std_logic;
 	signal divmmc_sd_clk: std_logic;
 	
+	signal zc_enable : std_logic := '0';
 	signal zc_do_bus	: std_logic_vector(7 downto 0);
 	signal zc_wr 		: std_logic :='0';
 	signal zc_rd		: std_logic :='0';
@@ -263,14 +260,13 @@ begin
 	
 	-- memory arbiter
 	U2: entity work.memory
-	generic map (
-		enable_divmmc => enable_divmmc,
-		enable_zcontroller => enable_zcontroller
-	)
 	port map (
 		CLK2X => CLK_28,
 		CLKX => CLK_14,
 		CLK_CPU  => clkcpu,
+		
+		enable_divmmc => divmmc_enable,
+		enable_zcontroller => zc_enable,
 		
 		-- loader signals
 		loader_act 		=> loader_act,
@@ -323,7 +319,6 @@ begin
 	);
 	
 	-- divmmc interface
-	G_DIVMMC: if enable_divmmc generate
 	U3: entity work.divmmc
 	port map (
 		I_CLK		=> CLK_28,
@@ -351,10 +346,8 @@ begin
 		O_MOSI		=> divmmc_sd_di,
 		I_MISO		=> DATA0
 	);
-	end generate G_DIVMMC;
 		
 	-- Z-Controller	
-	G_ZCCONTROLLER: if enable_zcontroller generate
 	U4: entity work.zcontroller 
 	port map(
 		RESET => not(N_RESET),
@@ -371,7 +364,6 @@ begin
 		MOSI => zc_sd_di,
 		MISO => DATA0
 	);
-	end generate G_ZCCONTROLLER;
 
 	-- keyboard
 	U5: entity work.cpld_kbd 
@@ -558,9 +550,9 @@ port map (
 	
 -- --------------------------------------------------------------------------------------------------------------------------------
 
-SD_NCS	<= '1' when loader_act = '1' else divmmc_sd_cs_n 	when enable_divmmc else zc_sd_cs_n 		when enable_zcontroller else '1';
-sd_clk 	<= '1' when loader_act = '1' else divmmc_sd_clk 	when enable_divmmc else zc_sd_clk	 	when enable_zcontroller else '1';
-sd_si 	<= '1' when loader_act = '1' else divmmc_sd_di 		when enable_divmmc else zc_sd_di 		when enable_zcontroller else '1';
+SD_NCS	<= '1' when loader_act = '1' else divmmc_sd_cs_n 	when divmmc_enable = '1' else zc_sd_cs_n 		when zc_enable = '1' else '1';
+sd_clk 	<= '1' when loader_act = '1' else divmmc_sd_clk 	when divmmc_enable = '1' else zc_sd_clk	 	when zc_enable = '1' else '1';
+sd_si 	<= '1' when loader_act = '1' else divmmc_sd_di 		when divmmc_enable = '1' else zc_sd_di 		when zc_enable = '1' else '1';
 
 -- share SPI between flash and SD
 DCLK <= flash_clk when loader_act = '1' else sd_clk;
@@ -575,8 +567,8 @@ flash_wr_n <= '1'; -- write
 flash_rd_n <= loader_flash_rd_n when loader_act = '1' else '1';
 flash_er_n <= '1'; -- erase
 
-divmmc_rom <= '1' when (divmmc_disable_zxrom = '1' and divmmc_eeprom_cs_n = '0') else '0';
-divmmc_ram <= '1' when (divmmc_disable_zxrom = '1' and divmmc_sram_cs_n = '0') else '0';
+divmmc_rom <= '1' when (divmmc_disable_zxrom = '1' and divmmc_eeprom_cs_n = '0' and divmmc_enable = '1') else '0';
+divmmc_ram <= '1' when (divmmc_disable_zxrom = '1' and divmmc_sram_cs_n = '0' and divmmc_enable = '1') else '0';
 
 ay_port <= '1' when A(7 downto 0) = x"FD" and A(15)='1' and fd_port = '1' else '0';
 AY_BC1 <= '1' when ay_port = '1' and A(14) = '1' and N_IORQ = '0' and (N_WR='0' or N_RD='0') else '0';
@@ -626,19 +618,21 @@ port_read <= '1' when N_IORQ = '0' and N_RD = '0' and N_M1 = '1' else '0';
 D(7 downto 0) <= 
 	ram_do when ram_oe_n = '0' else -- #memory
 	port_7ffd when port_read = '1' and A = X"7FFD" else  -- #7FFD - system port 
-	"00000" & ram_ext when port_read = '1' and A = X"DFFD" else  -- #DFFD - system port 
+	"00000" & ram_ext when port_read = '1' and A = X"DFFD" and ram_ext_std = "10" else  -- #DFFD - system port 
 	'1' & TAPE_IN & '1' & kb(4 downto 0) when port_read = '1' and A(0) = '0' else -- #FE - keyboard 
 	"000" & joy when port_read = '1' and A(7 downto 0) = X"1F" else -- #1F - kempston joy
-	divmmc_do when divmmc_wr = '1' else 									 -- divMMC
-	zc_do_bus when port_read = '1' and A(7 downto 6) = "01" and A(4 downto 0) = "10111" and enable_zcontroller else -- Z-controller
+	divmmc_do when divmmc_wr = '1' and divmmc_enable = '1' else 									 -- divMMC
+	zc_do_bus when port_read = '1' and A(7 downto 6) = "01" and A(4 downto 0) = "10111" and zc_enable = '1' else -- Z-controller
 	attr_r when port_read = '1' and A(7 downto 0) = x"FF" else -- #FF - attributes
 	"ZZZZZZZZ";
 
-divmmc_enable <= '1' when enable_divmmc and SD_NDET = '0' else '0';
+divmmc_enable <= '1' when ext_rombank = "000" and SD_NDET = '0' else '0';
+zc_enable <= '1' when ext_rombank = "001" else '0';
+ram_ext_std <= "10" when ext_rombank = "000" or ext_rombank = "001" else "11";
 
 -- z-controller 
-zc_wr <= '1' when (enable_zcontroller and N_IORQ = '0' and N_WR = '0' and A(7 downto 6) = "01" and A(4 downto 0) = "10111") else '0';
-zc_rd <= '1' when (enable_zcontroller and N_IORQ = '0' and N_RD = '0' and A(7 downto 6) = "01" and A(4 downto 0) = "10111") else '0';
+zc_wr <= '1' when (zc_enable = '1' and N_IORQ = '0' and N_WR = '0' and A(7 downto 6) = "01" and A(4 downto 0) = "10111") else '0';
+zc_rd <= '1' when (zc_enable = '1' and N_IORQ = '0' and N_RD = '0' and A(7 downto 6) = "01" and A(4 downto 0) = "10111") else '0';
 
 -- clocks
 process (CLK_28)
@@ -659,9 +653,9 @@ cs_dffd <= '1' when N_IORQ = '0' and N_M1 = '1' and A = X"DFFD" and fd_port = '1
 cs_7ffd <= '1' when N_IORQ = '0' and N_M1 = '1' and A = X"7FFD" else '0';
 cs_xxfd <= '1' when N_IORQ = '0' and N_M1 = '1' and A(15) = '0' and A(1) = '0' and fd_port = '0' else '0';
 
-ram_ext <= '0' & port_7ffd(6) & port_7ffd(7) when ram_ext_std = 0 else 
-			  port_7ffd(5) & port_7ffd(6) & port_7ffd(7) when ram_ext_std = 1 else
-			  port_dffd(2 downto 0) when ram_ext_std = 2 else 
+ram_ext <= '0' & port_7ffd(6) & port_7ffd(7) when ram_ext_std = "00" else 
+			  port_7ffd(5) & port_7ffd(6) & port_7ffd(7) when ram_ext_std = "01" else
+			  port_dffd(2 downto 0) when ram_ext_std = "10" else 
 			  "000";	
 			  
 -- ports, write by CPU
@@ -670,7 +664,7 @@ begin
 	if N_RESET = '0' then
 		port_7ffd <= "00000000";
 		--sound_out <= '0';
-		if (enable_zcontroller) then 
+		if (zc_enable = '1') then 
 			trdos <= '1'; -- 1 - boot into service rom, 0 - boot into 128 menu
 		else 
 			trdos <= '0';
@@ -701,9 +695,9 @@ begin
 			end if;
 			
 			-- trdos flag
-			if enable_zcontroller and N_M1 = '0' and N_MREQ = '0' and A(15 downto 8) = X"3D" and port_7ffd(4) = '1' then 
+			if zc_enable = '1' and N_M1 = '0' and N_MREQ = '0' and A(15 downto 8) = X"3D" and port_7ffd(4) = '1' then 
 				trdos <= '1';
-			elsif enable_zcontroller and N_M1 = '0' and N_MREQ = '0' and A(15 downto 14) /= "00" then 
+			elsif zc_enable = '1' and N_M1 = '0' and N_MREQ = '0' and A(15 downto 14) /= "00" then 
 				trdos <= '0'; 
 			end if;
 			

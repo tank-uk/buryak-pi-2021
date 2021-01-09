@@ -67,7 +67,7 @@ signal ram_a_bus 		: std_logic_vector(20 downto 0);
 
 -- System
 signal loader_act 	: std_logic := '1';
-signal reset_cnt  	: std_logic_vector(3 downto 0) := "0000";
+signal reset_cnt  	: std_logic_vector(7 downto 0) := "00000000";
 signal read_cnt 		: std_logic_vector(20 downto 0) := (others => '0');
 signal clear_cnt 		: std_logic_vector(20 downto 0) := (others => '0');
 
@@ -165,9 +165,9 @@ end process;
 process (RESET, CLK, reset_cnt, loader_act)
 begin
 	if RESET = '1' then
-		reset_cnt <= "0000";
+		reset_cnt <= (others => '0');
 	elsif CLK'event and CLK = '1' then
-		if (loader_act = '0' and reset_cnt /= "1000") then 
+		if (loader_act = '0' and reset_cnt /= "10000000") then 
 			reset_cnt <= reset_cnt + 1;
 		end if;
 	end if;
@@ -176,7 +176,7 @@ end process;
 -------------------------------------------------------------------------------
 
 LOADER_ACTIVE <= loader_act;
-LOADER_RESET <= reset_cnt(2);
+LOADER_RESET <= reset_cnt(6);
 FLASH_A <= spi_page_bus & spi_a_bus;
 RAM_A <= ram_a_bus;
 

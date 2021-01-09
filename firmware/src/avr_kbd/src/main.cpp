@@ -612,6 +612,7 @@ void set_rombank(byte bank)
   matrix[ZX_K_ROMBANK0] = bitRead(rom_bank, 0);
   matrix[ZX_K_ROMBANK1] = bitRead(rom_bank, 1);
   matrix[ZX_K_ROMBANK2] = bitRead(rom_bank, 2);
+  do_reset();
 }
 
 void clear_matrix(int clear_size)
@@ -718,6 +719,8 @@ void setup()
 
   digitalWrite(LED_TURBO, is_turbo ? HIGH : LOW);
   digitalWrite(LED_ROMBANK, (rom_bank != 0) ? HIGH: LOW);
+
+  delay(2000);
 
   do_reset();
 

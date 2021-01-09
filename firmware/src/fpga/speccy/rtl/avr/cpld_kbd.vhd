@@ -1,6 +1,7 @@
 library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.std_logic_arith.conv_integer;
+USE ieee.std_logic_unsigned.all;
 use IEEE.numeric_std.all;
 
 entity cpld_kbd is
@@ -100,15 +101,15 @@ begin
 	end if;
 end process;
 
-process (CLK)
+process (CLK, magick, waiting, turbo, joy, bank, reset)
 begin
 	if (rising_edge(CLK)) then 
-		O_RESET <= not(reset);
 		O_MAGICK <= not(magick);
 		O_WAIT <= not(waiting);
 		O_TURBO <= turbo;
 		O_JOY <= not(joy);
 		O_BANK <= bank;
+		O_RESET <= not(reset);
 	end if;
 end process;
 
