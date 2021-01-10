@@ -129,7 +129,7 @@ set_location_assignment PIN_119 -to MD[1]
 set_location_assignment PIN_115 -to MD[2]
 
 #=================MISC==========================
-set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
+set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVCMOS"
 set_global_assignment -name ENABLE_OCT_DONE OFF
 set_global_assignment -name USE_CONFIGURATION_DEVICE ON
 set_global_assignment -name CYCLONEIII_CONFIGURATION_DEVICE EPCS16
