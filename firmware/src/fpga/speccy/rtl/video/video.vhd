@@ -33,10 +33,7 @@ entity video is
 		
 		HCNT : out std_logic_vector(9 downto 0);
 		VCNT : out std_logic_vector(8 downto 0);
-		BLINK : out std_logic;
-		
-		VBUS_MODE : in std_logic := '0'; -- 1 = video bus, 2 = cpu bus
-		VID_RD : in std_logic -- 1 = read attribute, 0 = read pixel data
+		BLINK : out std_logic
 	);
 end entity;
 
@@ -84,10 +81,7 @@ begin
 
 		HCNT => hcnt_spec,
 		VCNT => vcnt_spec,
-		BLINK => BLINK,
-		
-		VBUS_MODE => VBUS_MODE,
-		VID_RD => VID_RD
+		BLINK => BLINK
 	);
 
 	A <= vid_a_spec;

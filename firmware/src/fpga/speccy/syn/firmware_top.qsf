@@ -181,12 +181,14 @@ set_location_assignment PIN_77 -to VGA_R[1]
 set_location_assignment PIN_76 -to VGA_R[0]
 set_location_assignment PIN_86 -to VGA_HSYNC
 set_location_assignment PIN_34 -to N_NMI
+
 set_global_assignment -name VHDL_FILE ../rtl/sound/dac.vhd
 set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/sound/turbosound/ym2149.sv
 set_global_assignment -name VHDL_FILE ../rtl/sound/turbosound/turbosound.vhd
 set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/sound/turbosound/saa1099.sv
 set_global_assignment -name VHDL_FILE ../rtl/sound/soundrive/soundrive.vhd
 set_global_assignment -name VHDL_FILE ../rtl/memory/memory.vhd
+set_global_assignment -name VHDL_FILE ../rtl/memory/altram1.vhd
 set_global_assignment -name VHDL_FILE ../rtl/firmware_top.vhd
 set_global_assignment -name QIP_FILE ../rtl/pll/altpll0.qip
 set_global_assignment -name VHDL_FILE ../rtl/flash/flash.vhd

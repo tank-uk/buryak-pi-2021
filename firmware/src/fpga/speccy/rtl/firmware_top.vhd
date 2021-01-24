@@ -88,6 +88,7 @@ architecture rtl of firmware_top is
 
 	signal attr_r   	: std_logic_vector(7 downto 0);
 	signal vid_a 		: std_logic_vector(13 downto 0);
+	signal video_do_bus: std_logic_vector(7 downto 0);
 	
 	signal video_r 	: std_logic_vector(1 downto 0);
 	signal video_g 	: std_logic_vector(1 downto 0);
@@ -118,10 +119,7 @@ architecture rtl of firmware_top is
 	signal fd_sel : std_logic;	
 																	  
 	signal ay_port		: std_logic := '0';
-		
-	signal vbus_mode  : std_logic := '0';
-	signal vid_rd		: std_logic := '0';
-	
+			
 	signal hsync     	: std_logic := '1';
 	signal vsync     	: std_logic := '1';
 	
@@ -305,10 +303,7 @@ begin
 		-- video
 		VA => vid_a,
 		VID_PAGE => port_7ffd(3),
-
-		-- video bus control signals
-		VBUS_MODE_O => vbus_mode, -- video bus mode: 0 - ram, 1 - vram
-		VID_RD_O => vid_rd, -- read bitmap or attribute from video memory
+		VID_DO => video_do_bus,
 		
 		-- TRDOS 
 		TRDOS => trdos,
@@ -393,7 +388,7 @@ begin
 		RESET => not(reset),
 		
 		BORDER => border_attr,
-		DI => MD,
+		DI => video_do_bus,
 		TURBO => turbo,
 		INTA => N_IORQ or N_M1,
 		MODE60 => '0',
@@ -412,10 +407,7 @@ begin
 		HCNT => hcnt,
 		VCNT => vcnt,
 		
-		BLINK => blink,
-
-		VBUS_MODE => vbus_mode,
-		VID_RD => vid_rd
+		BLINK => blink
 	);
 	
 	-- Scandoubler	
