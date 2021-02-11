@@ -7,7 +7,7 @@ FPGA based Buryak
 Выход VGA 50Hz
 Тайминги Пентагон
 
-Периверия:
+Периферия:
 DivMMC , Z-контроллер
 Tape IN/OUT
 WildSound III (STM32F405) ( AY , TS , XM ) с USB-UART ( CP2102 )
