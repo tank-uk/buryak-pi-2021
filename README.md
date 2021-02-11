@@ -1,5 +1,6 @@
 # buryak-pi-2021
 FPGA based Buryak
+
   Центральный Процессор Z80 (Z84C0020FEC)
   
   Основная логика EP4CE6E22C8
