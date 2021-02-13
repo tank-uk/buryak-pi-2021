@@ -78,6 +78,7 @@ architecture rtl of firmware_top is
 	signal clk_7 		: std_logic := '0';
 	signal clk_8 		: std_logic := '0';
 	signal clkcpu 		: std_logic := '1';
+	signal clk_21 		: std_logic := '0';
 	
 	signal ena_div2	: std_logic := '0';
 	signal ena_div4	: std_logic := '0';
@@ -226,6 +227,17 @@ architecture rtl of firmware_top is
 	signal covox_b		: std_logic_vector(7 downto 0);
 	signal covox_c		: std_logic_vector(7 downto 0);
 	signal covox_d		: std_logic_vector(7 downto 0);
+	
+	-- TurboSound	
+	signal ssg_sel		: std_logic;	
+	signal ssg0_do_bus	: std_logic_vector(7 downto 0);	
+	signal ssg0_a		: std_logic_vector(7 downto 0);	
+	signal ssg0_b		: std_logic_vector(7 downto 0);	
+	signal ssg0_c		: std_logic_vector(7 downto 0);	
+	signal ssg1_do_bus	: std_logic_vector(7 downto 0);	
+	signal ssg1_a		: std_logic_vector(7 downto 0);	
+	signal ssg1_b		: std_logic_vector(7 downto 0);	
+	signal ssg1_c		: std_logic_vector(7 downto 0);
 
 	-- SAA1099
 	signal saa_wr_n		: std_logic;
@@ -253,7 +265,8 @@ begin
 		inclk0			=> CLK_50MHZ,
 		locked			=> locked,
 		c0 				=> clk_28,
-		c1 				=> clk_8
+		c1 				=> clk_8,
+		c2 				=> clk_21
 	);
 	
 	-- memory arbiter
@@ -506,6 +519,30 @@ port map (
 	O_COVOX_B	=> covox_b,
 	O_COVOX_C	=> covox_c,
 	O_COVOX_D	=> covox_d);
+	
+-- TurboSound	
+U12: entity work.turbosound	
+port map (	
+	I_CLK		=> clk_28,	
+	I_ENA		=> ena_div16,	
+	I_ADDR		=> A,	
+	I_DATA		=> D,	
+	I_WR_N		=> N_WR,	
+	I_IORQ_N	=> N_IORQ,	
+	I_M1_N		=> N_M1,	
+	I_RESET_N	=> N_RESET,	
+	I_MODE   => '1', -- AY	
+	O_SEL		=> ssg_sel,	
+	-- ssg0	
+	O_SSG0_DA	=> ssg0_do_bus,	
+	O_SSG0_AUDIO_A	=> ssg0_a,	
+	O_SSG0_AUDIO_B	=> ssg0_b,	
+	O_SSG0_AUDIO_C	=> ssg0_c,	
+	-- ssg1	
+	O_SSG1_DA	=> ssg1_do_bus,	
+	O_SSG1_AUDIO_A	=> ssg1_a,	
+	O_SSG1_AUDIO_B	=> ssg1_b,	
+	O_SSG1_AUDIO_C	=> ssg1_c);
 
 -- saa
 U13: saa1099
@@ -563,8 +600,8 @@ divmmc_rom <= '1' when (divmmc_disable_zxrom = '1' and divmmc_eeprom_cs_n = '0' 
 divmmc_ram <= '1' when (divmmc_disable_zxrom = '1' and divmmc_sram_cs_n = '0' and divmmc_enable = '1') else '0';
 
 ay_port <= '1' when A(7 downto 0) = x"FD" and A(15)='1' and fd_port = '1' else '0';
-AY_BC1 <= '1' when ay_port = '1' and A(14) = '1' and N_IORQ = '0' and (N_WR='0' or N_RD='0') else '0';
-AY_BDIR <= '1' when ay_port = '1' and N_IORQ = '0' and N_WR = '0' else '0';	
+AY_BC1 <= '1' when turbo = '0' and ay_port = '1' and A(14) = '1' and N_IORQ = '0' and (N_WR='0' or N_RD='0') else '0';
+AY_BDIR <= '1' when turbo = '0' and ay_port = '1' and N_IORQ = '0' and N_WR = '0' else '0';	
 
 N_NMI <= '0' when nmi = '0' else '1';
 areset <= not locked;
@@ -600,7 +637,7 @@ ena_div16 <= ena_cnt(3) and ena_cnt(2) and ena_cnt(1) and ena_cnt(0);
 ena_div32 <= ena_cnt(5) and ena_cnt(4) and ena_cnt(3) and ena_cnt(2) and ena_cnt(1) and ena_cnt(0);
 
 -- CPU clock 
-clkcpu <= clk_28 and ena_div4 when turbo = '1' else clk_28 and ena_div8;
+clkcpu <= clk_21 when turbo = '1' else clk_28 and ena_div8;
 CPU_CLK <= clkcpu;
 
 port_write <= '1' when N_IORQ = '0' and N_WR = '0' and N_M1 = '1' else '0';
@@ -613,8 +650,10 @@ D(7 downto 0) <=
 	"00000" & ram_ext when port_read = '1' and A = X"DFFD" and ram_ext_std = "10" else  -- #DFFD - system port 
 	'1' & TAPE_IN & '1' & kb(4 downto 0) when port_read = '1' and A(0) = '0' else -- #FE - keyboard 
 	"000" & joy when port_read = '1' and A(7 downto 0) = X"1F" else -- #1F - kempston joy
-	divmmc_do when divmmc_wr = '1' and divmmc_enable = '1' else 									 -- divMMC
+	divmmc_do when divmmc_wr = '1' and divmmc_enable = '1' else 									 -- divMMC	
 	zc_do_bus when port_read = '1' and A(7 downto 6) = "01" and A(4 downto 0) = "10111" and zc_enable = '1' else -- Z-controller
+	ssg0_do_bus when turbo = '0' and port_read = '1' and A = X"FFFD" and ssg_sel = '0' else -- Turbosound 	
+	ssg1_do_bus when turbo = '0' and port_read = '1' and A = X"FFFD" and ssg_sel = '1' else
 	attr_r when port_read = '1' and A(7 downto 0) = x"FF" else -- #FF - attributes
 	"ZZZZZZZZ";
 
@@ -701,10 +740,18 @@ end process;
 saa_wr_n <= '0' when (N_IORQ = '0' and N_WR = '0' and A(7 downto 0) = "11111111" and trdos = '0') else '1';
 
 audio_l	<= ("000" & sound_out & "000000000000") + 
+				("000" & ssg0_a & "00000") + 	
+				("000" & ssg0_b & "00000") + 	
+				("000" & ssg1_a & "00000") + 	
+				("000" & ssg1_b & "00000") + 
 				("000" & covox_a & "00000") + 
 				("000" & covox_b & "00000") + 
 				("000" & saa_out_l & "00000");
 audio_r	<= ("000" & sound_out & "000000000000") + 
+				("000" & ssg0_c & "00000") + 	
+				("000" & ssg0_b & "00000") + 	
+				("000" & ssg1_c & "00000") + 	
+				("000" & ssg1_b & "00000") + 
 				("000" & covox_c & "00000") + 
 				("000" & covox_d & "00000") + 
 				("000" & saa_out_r & "00000");
