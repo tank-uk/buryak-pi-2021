@@ -11,6 +11,7 @@ use IEEE.numeric_std.all;
 
 entity firmware_top is
 	generic(
+		use_turbosound : boolean := false;
 		use_psram : boolean := false
 	);
 	port(
@@ -562,6 +563,7 @@ port map (
 	O_COVOX_D	=> covox_d);
 	
 -- TurboSound	
+G_TURBOSOUND: if use_turbosound generate 
 U12: entity work.turbosound	
 port map (	
 	I_CLK		=> clk_28,	
@@ -584,6 +586,7 @@ port map (
 	O_SSG1_AUDIO_A	=> ssg1_a,	
 	O_SSG1_AUDIO_B	=> ssg1_b,	
 	O_SSG1_AUDIO_C	=> ssg1_c);
+end generate G_TURBOSOUND;
 
 -- saa
 U13: saa1099
@@ -641,8 +644,8 @@ divmmc_rom <= '1' when (divmmc_disable_zxrom = '1' and divmmc_eeprom_cs_n = '0' 
 divmmc_ram <= '1' when (divmmc_disable_zxrom = '1' and divmmc_sram_cs_n = '0' and divmmc_enable = '1') else '0';
 
 ay_port <= '1' when A(7 downto 0) = x"FD" and A(15)='1' and fd_port = '1' else '0';
-AY_BC1 <= '1' when turbo(1) = '0' and ay_port = '1' and A(14) = '1' and N_IORQ = '0' and (N_WR='0' or N_RD='0') else '0';
-AY_BDIR <= '1' when turbo(1) = '0' and ay_port = '1' and N_IORQ = '0' and N_WR = '0' else '0';	
+AY_BC1 <= '1' when ay_port = '1' and A(14) = '1' and N_IORQ = '0' and (N_WR='0' or N_RD='0') else '0';
+AY_BDIR <= '1' when ay_port = '1' and N_IORQ = '0' and N_WR = '0' else '0';
 
 N_NMI <= '0' when nmi = '0' else '1';
 areset <= not locked;
@@ -695,8 +698,8 @@ D(7 downto 0) <=
 	"000" & joy when port_read = '1' and A(7 downto 0) = X"1F" else -- #1F - kempston joy
 	divmmc_do when divmmc_wr = '1' and divmmc_enable = '1' else 									 -- divMMC	
 	zc_do_bus when port_read = '1' and A(7 downto 6) = "01" and A(4 downto 0) = "10111" and zc_enable = '1' else -- Z-controller
-	ssg0_do_bus when turbo(1) = '0' and port_read = '1' and A = X"FFFD" and ssg_sel = '0' else -- Turbosound 	
-	ssg1_do_bus when turbo(1) = '0' and port_read = '1' and A = X"FFFD" and ssg_sel = '1' else
+	ssg0_do_bus when use_turbosound and port_read = '1' and A = X"FFFD" and ssg_sel = '0' else -- Turbosound 	
+	ssg1_do_bus when use_turbosound and port_read = '1' and A = X"FFFD" and ssg_sel = '1' else
 	attr_r when port_read = '1' and A(7 downto 0) = x"FF" else -- #FF - attributes
 	"ZZZZZZZZ";
 
