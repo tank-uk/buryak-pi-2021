@@ -34,10 +34,12 @@ byte turbo = 0x0;
 bool is_turbo = false;
 bool is_wait = false;
 byte rom_bank = 0x0;
+bool blink = false;
 
 unsigned long t = 0;  // current time
 unsigned long tl = 0; // led poll time
 unsigned long te = 0; // eeprom store time
+unsigned long tb = 0; // blink state
 
 int capsed_keys[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 int capsed_keys_size = 0;
@@ -848,7 +850,17 @@ void loop()
     tl = n;
   }
 
-  digitalWrite(LED_TURBO, (turbo != 0) ? HIGH : LOW);
+  if (n - tb >= 500) {
+    blink = !blink;
+    tb = n;
+  }
+
+  if (turbo == 0x02) {
+    digitalWrite(LED_TURBO, blink ? HIGH : LOW);
+  } else {
+    digitalWrite(LED_TURBO, (turbo != 0) ? HIGH : LOW);
+  }
+
   digitalWrite(LED_PAUSE, is_wait ? HIGH: LOW);
   digitalWrite(AUDIO_OFF, is_wait ? HIGH: LOW);
   digitalWrite(LED_ROMBANK, rom_bank != 0 ? HIGH : LOW);
