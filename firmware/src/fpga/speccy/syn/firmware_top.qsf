@@ -182,6 +182,7 @@ set_location_assignment PIN_76 -to VGA_R[0]
 set_location_assignment PIN_86 -to VGA_HSYNC
 set_location_assignment PIN_34 -to N_NMI
 
+set_global_assignment -name VERILOG_FILE ../rtl/memory/llqspi.v
 set_global_assignment -name VHDL_FILE ../rtl/sound/dac.vhd
 set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/sound/turbosound/ym2149.sv
 set_global_assignment -name VHDL_FILE ../rtl/sound/turbosound/turbosound.vhd
@@ -207,4 +208,5 @@ set_global_assignment -name VHDL_FILE ../rtl/sd/divmmc.vhd
 set_global_assignment -name VHDL_FILE ../rtl/sd/zcontroller.vhd
 set_global_assignment -name SDC_FILE firmware_top.sdc
 set_global_assignment -name CDF_FILE firmware_top.cdf
+set_global_assignment -name VHDL_FILE ../rtl/memory/psram.vhd
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

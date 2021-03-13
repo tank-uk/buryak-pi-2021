@@ -29,7 +29,8 @@ port (
 	N_OE 			: out std_logic;
 	
 	MA 			: out std_logic_vector(20 downto 0);
-	MD 			: inout std_logic_vector(7 downto 0);
+	MDI 			: in std_logic_vector(7 downto 0);
+	MDO 			: out std_logic_vector(7 downto 0);
 	N_MRD 		: out std_logic;
 	N_MWR 		: out std_logic;
 	
@@ -101,7 +102,7 @@ begin
 				'0' when is_ram = '1' and N_WR = '0'
 				 else '1';
 
-	DO <= MD;
+	DO <= MDI;
 	N_OE <= '0' when (is_ram = '1' or is_rom = '1') and N_RD = '0' else '1';
 		
 	ram_page <=	
@@ -116,7 +117,7 @@ begin
 		ram_page(6 downto 0) & DIVMMC_A(0) & A(12 downto 0) when enable_divmmc = '1' and (IS_DIVMMC_RAM = '1' or IS_DIVMMC_ROM = '1') else -- divmmc ram
 		ram_page(6 downto 0) & A(13 downto 0) when IS_DIVMMC_RAM = '0' and IS_DIVMMC_ROM = '0'; -- spectrum ram 
 	
-	MD(7 downto 0) <= 
+	MDO(7 downto 0) <= 
 		loader_ram_do when loader_act = '1' else -- loader DO
 		D(7 downto 0) when is_ram = '1' and N_WR = '0' else -- cpu DO
 		(others => 'Z');

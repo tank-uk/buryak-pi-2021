@@ -17,7 +17,7 @@ port (
 	AVR_SS      : in std_logic;
 			
 	O_RESET		: out std_logic;
-	O_TURBO		: out std_logic;
+	O_TURBO		: out std_logic_vector(1 downto 0);
 	O_MAGICK		: out std_logic;
 	O_WAIT 		: out std_logic;
 	
@@ -33,7 +33,7 @@ architecture RTL of cpld_kbd is
 
 	 -- additional signals
 	 signal reset   : std_logic := '0';
-	 signal turbo   : std_logic := '0';
+	 signal turbo   : std_logic_vector(1 downto 0) := "00";
 	 signal magick  : std_logic := '0';
 	 signal waiting : std_logic := '0';
 	 
@@ -84,7 +84,7 @@ begin
 				when X"04" => kb_data(31 downto 24) <= spi_do (7 downto 0);
 				when X"05" => kb_data(39 downto 32) <= spi_do (7 downto 0);	
 				when X"06" => reset <= spi_do(0); 
-								  turbo <= spi_do(1); 
+								  -- turbo <= spi_do(1); -- outdated signal, now it's vector
 								  magick <= spi_do(2); 
 								  joy(0) <= spi_do(7);
 								  joy(1) <= spi_do(6);
@@ -95,6 +95,7 @@ begin
 								  --joy(5) <= spi_do(3); -- fire2
 								  --joy(6) <= spi_do(4); -- fire3
 								  waiting <= spi_do(5);
+								  turbo <= spi_do(7 downto 6);
 				when others => null;
 			end case;
 		end if;

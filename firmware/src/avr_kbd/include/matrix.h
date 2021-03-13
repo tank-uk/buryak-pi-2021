@@ -71,7 +71,7 @@
 
 // Additional signals
 #define ZX_K_RESET  40
-#define ZX_K_TURBO  41
+#define ZX_K_TURBO  41 // unused
 #define ZX_K_MAGICK 42
 
 // Joystick signals
@@ -92,6 +92,10 @@
 
 // WAIT signal
 #define ZX_K_WAIT 53
+
+// TURBO
+#define ZX_K_TURBO0 54
+#define ZX_K_TURBO1 55
 
 // kbd commands
 #define CMD_KBD_BYTE1 0x01

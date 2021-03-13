@@ -30,7 +30,7 @@ SPISettings settingsA(8000000, MSBFIRST, SPI_MODE0); // SPI transmission setting
 
 bool matrix[ZX_MATRIX_FULL_SIZE]; // matrix of pressed keys + special keys to be transmitted on CPLD side by SPI protocol
 
-bool is_turbo = false;
+byte turbo = 0x0;
 bool is_wait = false;
 byte rom_bank = 0x0;
 
@@ -444,9 +444,16 @@ void fill_kbd_matrix(int sc)
     // Scroll Lock -> Turbo
     case PS2_SCROLL: 
       if (is_up) {
-        is_turbo = !is_turbo;        
-        eeprom_store_bool(EEPROM_TURBO_ADDRESS, is_turbo);
-        matrix[ZX_K_TURBO] = is_turbo;
+        if (turbo == 0x0) {
+          turbo = 0x01;
+        } else if (turbo == 0x01) {
+          turbo = 0x02;
+        } else {
+          turbo = 0x0;
+        }
+        eeprom_store_byte(EEPROM_TURBO_ADDRESS, turbo);
+        matrix[ZX_K_TURBO0] = bitRead(turbo, 0);
+        matrix[ZX_K_TURBO1] = bitRead(turbo, 1);
       }
     break;
 
@@ -704,13 +711,18 @@ void eeprom_store_byte(int addr, byte value)
 
 void eeprom_restore_values()
 {
-  is_turbo = eeprom_restore_bool(EEPROM_TURBO_ADDRESS, is_turbo);
   rom_bank = eeprom_restore_byte(EEPROM_ROMBANK_ADDRESS, 0);
+  turbo = eeprom_restore_byte(EEPROM_TURBO_ADDRESS, 0);
   if (rom_bank > 7) {
     rom_bank = 0;
     eeprom_store_byte(EEPROM_ROMBANK_ADDRESS, rom_bank);
   }
-  matrix[ZX_K_TURBO] = is_turbo;
+  if (turbo > 0x02) {
+    turbo = 0;
+    eeprom_store_byte(EEPROM_TURBO_ADDRESS, turbo);
+  }
+  matrix[ZX_K_TURBO0] = bitRead(turbo, 0);
+  matrix[ZX_K_TURBO1] = bitRead(turbo, 1);
   matrix[ZX_K_ROMBANK0] = bitRead(rom_bank, 0);
   matrix[ZX_K_ROMBANK1] = bitRead(rom_bank, 1);
   matrix[ZX_K_ROMBANK2] = bitRead(rom_bank, 2);
@@ -718,7 +730,7 @@ void eeprom_restore_values()
 
 void eeprom_store_values()
 {
-  eeprom_store_bool(EEPROM_TURBO_ADDRESS, is_turbo);
+  eeprom_store_byte(EEPROM_TURBO_ADDRESS, turbo);
   eeprom_store_byte(EEPROM_ROMBANK_ADDRESS, rom_bank);
 }
 
@@ -768,7 +780,7 @@ void setup()
   // restore saved modes from EEPROM
   eeprom_restore_values();
 
-  digitalWrite(LED_TURBO, is_turbo ? HIGH : LOW);
+  digitalWrite(LED_TURBO, (turbo != 0) ? HIGH : LOW);
   digitalWrite(LED_ROMBANK, (rom_bank != 0) ? HIGH: LOW);
 
   delay(2000);
@@ -830,7 +842,7 @@ void loop()
     tl = n;
   }
 
-  digitalWrite(LED_TURBO, is_turbo ? HIGH : LOW);
+  digitalWrite(LED_TURBO, (turbo != 0) ? HIGH : LOW);
   digitalWrite(LED_PAUSE, is_wait ? HIGH: LOW);
   digitalWrite(AUDIO_OFF, is_wait ? HIGH: LOW);
   digitalWrite(LED_ROMBANK, rom_bank != 0 ? HIGH : LOW);

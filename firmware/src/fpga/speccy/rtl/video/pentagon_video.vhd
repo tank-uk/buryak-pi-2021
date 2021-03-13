@@ -14,7 +14,7 @@ entity pentagon_video is
 		ENA		: in std_logic; -- 7 MHz 
 		BORDER	: in std_logic_vector(2 downto 0);	-- bordr color (port #xxFE)
 		DI			: in std_logic_vector(7 downto 0);	-- video data from memory
-		TURBO 	: in std_logic := '0'; -- 1 = turbo mode, 0 = normal mode
+		TURBO 	: in std_logic_vector := "00"; -- turbo mode
 		INTA		: in std_logic := '0'; -- int request for turbo mode
 		INT		: out std_logic; -- int output
 		MODE60	: in std_logic := '0'; -- '0'
@@ -119,7 +119,7 @@ begin
 				end if;
 			
 				-- int
-				if TURBO = '1' then
+				if TURBO /= "00" then
 					-- TURBO int
 					if hor_cnt & chr_col_cnt = 318 and ver_cnt & chr_row_cnt = 239 then
 						int_sig <= '0';
