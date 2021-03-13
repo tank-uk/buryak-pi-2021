@@ -401,7 +401,7 @@ begin
 	U4: entity work.zcontroller 
 	port map(
 		RESET => not(N_RESET),
-		CLK => clk_7,
+		CLK => clkcpu,
 		A => A(5),
 		DI => D,
 		DO => zc_do_bus,
