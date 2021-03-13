@@ -59,7 +59,7 @@ entity firmware_top is
 		BEEPER_L			: out std_logic := '0';
 		BEEPER_R 		: out std_logic := '0';
 		TAPE_IN 			: in std_logic;
-		TAPE_OUT 		: out std_logic := '0';
+		TAPE_OUT 		: buffer std_logic := '0';
 
 		-- AY
 		AY_BC1			: out std_logic;
@@ -783,18 +783,22 @@ end process;
 saa_wr_n <= '0' when (N_IORQ = '0' and N_WR = '0' and A(7 downto 0) = "11111111" and trdos = '0') else '1';
 
 audio_l	<= ("000" & sound_out & "000000000000") + 
+				("0000" & TAPE_IN &   "00000000000") +
+				("0000" & TAPE_OUT &  "00000000000") +
 				("000" & ssg0_a & "00000") + 	
-				("000" & ssg0_b & "00000") + 	
+				("0000" & ssg0_b & "0000") + 	
 				("000" & ssg1_a & "00000") + 	
-				("000" & ssg1_b & "00000") + 
+				("0000" & ssg1_b & "0000") + 
 				("000" & covox_a & "00000") + 
 				("000" & covox_b & "00000") + 
 				("000" & saa_out_l & "00000");
 audio_r	<= ("000" & sound_out & "000000000000") + 
+				("0000" & TAPE_IN &   "00000000000") +
+				("0000" & TAPE_OUT &  "00000000000") +
 				("000" & ssg0_c & "00000") + 	
-				("000" & ssg0_b & "00000") + 	
+				("0000" & ssg0_b & "0000") + 	
 				("000" & ssg1_c & "00000") + 	
-				("000" & ssg1_b & "00000") + 
+				("0000" & ssg1_b & "0000") + 
 				("000" & covox_c & "00000") + 
 				("000" & covox_d & "00000") + 
 				("000" & saa_out_r & "00000");
