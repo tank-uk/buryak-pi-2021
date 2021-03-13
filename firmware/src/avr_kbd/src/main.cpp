@@ -31,6 +31,7 @@ SPISettings settingsA(8000000, MSBFIRST, SPI_MODE0); // SPI transmission setting
 bool matrix[ZX_MATRIX_FULL_SIZE]; // matrix of pressed keys + special keys to be transmitted on CPLD side by SPI protocol
 
 byte turbo = 0x0;
+bool is_turbo = false;
 bool is_wait = false;
 byte rom_bank = 0x0;
 
@@ -451,9 +452,12 @@ void fill_kbd_matrix(int sc)
         } else {
           turbo = 0x0;
         }
+
+        is_turbo = (turbo > 0) ? true : false;
         eeprom_store_byte(EEPROM_TURBO_ADDRESS, turbo);
         matrix[ZX_K_TURBO0] = bitRead(turbo, 0);
         matrix[ZX_K_TURBO1] = bitRead(turbo, 1);
+        matrix[ZX_K_TURBO] = is_turbo;
       }
     break;
 
@@ -721,8 +725,10 @@ void eeprom_restore_values()
     turbo = 0;
     eeprom_store_byte(EEPROM_TURBO_ADDRESS, turbo);
   }
+  is_turbo = (turbo > 0) ? true : false;
   matrix[ZX_K_TURBO0] = bitRead(turbo, 0);
   matrix[ZX_K_TURBO1] = bitRead(turbo, 1);
+  matrix[ZX_K_TURBO] = is_turbo;
   matrix[ZX_K_ROMBANK0] = bitRead(rom_bank, 0);
   matrix[ZX_K_ROMBANK1] = bitRead(rom_bank, 1);
   matrix[ZX_K_ROMBANK2] = bitRead(rom_bank, 2);

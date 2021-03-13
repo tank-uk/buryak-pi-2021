@@ -71,7 +71,7 @@
 
 // Additional signals
 #define ZX_K_RESET  40
-#define ZX_K_TURBO  41 // unused
+#define ZX_K_TURBO  41 // compatibility with old firmwares
 #define ZX_K_MAGICK 42
 
 // Joystick signals

@@ -15,6 +15,8 @@ pio run -t clean
 
 echo "Done"
 
+#exit
+
 cd ..
 
 echo "Building Speccy FPGA sources"
