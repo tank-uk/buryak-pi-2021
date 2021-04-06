@@ -163,7 +163,7 @@ architecture rtl of firmware_top is
 	signal trdos	: std_logic :='1';
 	
 	signal kb : std_logic_vector(4 downto 0) := "11111";
-	signal joy : std_logic_vector(4 downto 0) := "11111";
+	signal joy : std_logic_vector(7 downto 0) := "00000000";
 	signal nmi : std_logic;
 	signal areset : std_logic;
 	signal locked : std_logic;
@@ -695,7 +695,7 @@ D(7 downto 0) <=
 	port_7ffd when port_read = '1' and A = X"7FFD" else  -- #7FFD - system port 
 	"00000" & ram_ext when port_read = '1' and A = X"DFFD" and ram_ext_std = "10" else  -- #DFFD - system port 
 	'1' & TAPE_IN & '1' & kb(4 downto 0) when port_read = '1' and A(0) = '0' else -- #FE - keyboard 
-	"000" & joy when port_read = '1' and A(7 downto 0) = X"1F" else -- #1F - kempston joy
+	joy when port_read = '1' and A(7 downto 0) = X"1F" else -- #1F - kempston joy
 	divmmc_do when divmmc_wr = '1' and divmmc_enable = '1' else 									 -- divMMC	
 	zc_do_bus when port_read = '1' and A(7 downto 6) = "01" and A(4 downto 0) = "10111" and zc_enable = '1' else -- Z-controller
 	ssg0_do_bus when use_turbosound and port_read = '1' and A = X"FFFD" and ssg_sel = '0' else -- Turbosound 	

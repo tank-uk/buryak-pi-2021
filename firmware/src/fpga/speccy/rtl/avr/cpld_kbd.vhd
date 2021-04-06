@@ -21,7 +21,7 @@ port (
 	O_MAGICK		: out std_logic;
 	O_WAIT 		: out std_logic;
 	
-	O_JOY 		: out std_logic_vector(4 downto 0);
+	O_JOY 		: out std_logic_vector(7 downto 0);
 	O_BANK 		: out std_logic_vector(2 downto 0)
 );
 end cpld_kbd;
@@ -41,7 +41,7 @@ architecture RTL of cpld_kbd is
 	 signal spi_do_valid : std_logic := '0';
 	 signal spi_do : std_logic_vector(15 downto 0);
 	 
-	 signal joy : std_logic_vector(4 downto 0);
+	 signal joy : std_logic_vector(6 downto 0);
 	 signal bank : std_logic_vector(2 downto 0) := "000";
 
 begin
@@ -92,8 +92,8 @@ begin
 								  joy(3) <= spi_do(4);
 								  joy(4) <= spi_do(3); 
 				when X"07" => bank <= spi_do(2 downto 0);
-								  --joy(5) <= spi_do(3); -- fire2
-								  --joy(6) <= spi_do(4); -- fire3
+								  joy(5) <= spi_do(3); -- fire2
+								  joy(6) <= spi_do(4); -- fire3
 								  waiting <= spi_do(5);
 								  turbo <= spi_do(7 downto 6);
 				when others => null;
@@ -108,7 +108,7 @@ begin
 		O_MAGICK <= not(magick);
 		O_WAIT <= not(waiting);
 		O_TURBO <= turbo;
-		O_JOY <= not(joy);
+		O_JOY <= '0' & not(joy);
 		O_BANK <= bank;
 		O_RESET <= not(reset);
 	end if;
