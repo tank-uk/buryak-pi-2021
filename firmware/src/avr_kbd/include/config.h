@@ -5,7 +5,9 @@
 #define JOY_KEMPSTON 0
 #define JOY_SEGA 1
 
+#ifndef JOY_TYPE
 #define JOY_TYPE JOY_KEMPSTON // JOY_SEGA
+#endif
 
 // Pins
 #define PIN_BTN_NMI 0

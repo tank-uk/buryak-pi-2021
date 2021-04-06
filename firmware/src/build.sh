@@ -7,9 +7,14 @@ echo "Building AVR sources"
 cd avr_kbd
 
 pio run -t clean
+export PLATFORMIO_BUILD_FLAGS="-DJOY_TYPE=0 -Wall"
 pio run
-
 cp .pio/build/ATmega8/firmware.hex ../../release/avr_kbd.hex
+
+pio run -t clean
+export PLATFORMIO_BUILD_FLAGS="-DJOY_TYPE=1 -Wall"
+pio run
+cp .pio/build/ATmega8/firmware.hex ../../release/avr_kbd_sega.hex
 
 pio run -t clean
 

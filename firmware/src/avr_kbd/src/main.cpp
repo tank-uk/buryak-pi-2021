@@ -19,7 +19,7 @@
 
 PS2KeyRaw kbd;
 
-#if JOYTYPE==JOY_SEGA
+#if JOY_TYPE==JOY_SEGA
   #include "SegaController.h" // https://github.com/jonthysell/SegaController/
   SegaController joystick(JOY_FIRE3, JOY_UP, JOY_DOWN, JOY_LEFT, JOY_RIGHT, JOY_FIRE, JOY_FIRE2); // db9_pin_7, db9_pin_1, db9_pin_2, db9_pin_3, db9_pin_4, db9_pin_6, db9_pin_9
   word joy_current_state = 0;
@@ -814,16 +814,16 @@ void loop()
   }
 
 // read sega joystick
-#if JOYTYPE==JOY_SEGA
+#if JOY_TYPE==JOY_SEGA
   joy_current_state = joystick.getState();
   if (joy_current_state != joy_last_state) {
     matrix[ZX_JOY_UP] = !(joy_current_state & SC_BTN_UP);
     matrix[ZX_JOY_DOWN] = !(joy_current_state & SC_BTN_DOWN);
     matrix[ZX_JOY_LEFT] = !(joy_current_state & SC_BTN_LEFT);
     matrix[ZX_JOY_RIGHT] = !(joy_current_state & SC_BTN_RIGHT);
-    matrix[ZX_JOY_FIRE] = !(joy_current_state & SC_BTN_A);
-    matrix[ZX_JOY_FIRE2] = !(joy_current_state & SC_BTN_B);
-    matrix[ZX_JOY_FIRE3] = !(joy_current_state & SC_BTN_C);
+    matrix[ZX_JOY_FIRE] = !(joy_current_state & SC_BTN_B);
+    matrix[ZX_JOY_FIRE2] = !(joy_current_state & SC_BTN_C);
+    matrix[ZX_JOY_FIRE3] = !(joy_current_state & SC_BTN_A);
     joy_last_state = joy_current_state;    
   }
 #else
