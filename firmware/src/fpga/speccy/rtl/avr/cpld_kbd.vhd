@@ -41,7 +41,7 @@ architecture RTL of cpld_kbd is
 	 signal spi_do_valid : std_logic := '0';
 	 signal spi_do : std_logic_vector(15 downto 0);
 	 
-	 signal joy : std_logic_vector(6 downto 0);
+	 signal joy : std_logic_vector(11 downto 0) := "111111111111";
 	 signal bank : std_logic_vector(2 downto 0) := "000";
 
 begin
@@ -96,6 +96,9 @@ begin
 								  joy(6) <= spi_do(4); -- fire3
 								  waiting <= spi_do(5);
 								  turbo <= spi_do(7 downto 6);
+				when X"08" => joy(11 downto 7) <= spi_do(4 downto 0); -- start, x, y, z, mode
+							 	  -- spi(7 downto 5) -- free pins
+
 				when others => null;
 			end case;
 		end if;
@@ -108,7 +111,7 @@ begin
 		O_MAGICK <= not(magick);
 		O_WAIT <= not(waiting);
 		O_TURBO <= turbo;
-		O_JOY <= '0' & not(joy);
+		O_JOY <= not(joy(7 downto 0));
 		O_BANK <= bank;
 		O_RESET <= not(reset);
 	end if;

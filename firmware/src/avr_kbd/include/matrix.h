@@ -26,7 +26,7 @@
 // Key position in output array
 
 #define ZX_MATRIX_SIZE 40 // 40 keys only
-#define ZX_MATRIX_FULL_SIZE 56 // 40 keys + 3 special signals + 5 joy buttons + additional ROM bank, etc
+#define ZX_MATRIX_FULL_SIZE 64 // 40 keys + 3 special signals + 5 joy buttons + additional ROM bank, etc
 
 #define ZX_K_CS  0
 #define ZX_K_A   1
@@ -75,7 +75,7 @@
 #define ZX_K_MAGICK 42
 
 // Joystick signals
-#define ZX_JOY_FIRE 43
+#define ZX_JOY_FIRE 43 // B on SEGA
 #define ZX_JOY_UP 44
 #define ZX_JOY_DOWN 45
 #define ZX_JOY_LEFT 46
@@ -87,8 +87,8 @@
 #define ZX_K_ROMBANK2 50
 
 // Additional joystick fires
-#define ZX_JOY_FIRE2 51
-#define ZX_JOY_FIRE3 52
+#define ZX_JOY_FIRE2 51 // C on SEGA
+#define ZX_JOY_FIRE3 52 // A on SEGA
 
 // WAIT signal
 #define ZX_K_WAIT 53
@@ -96,6 +96,14 @@
 // TURBO
 #define ZX_K_TURBO0 54
 #define ZX_K_TURBO1 55
+
+// Additional joystick buttons
+#define ZX_JOY_FIRE4 56 // Start on SEGA
+#define ZX_JOY_X 57     // X on SEGA
+#define ZX_JOY_Y 58     // Y on SEGA
+#define ZX_JOY_Z 59     // Z on SEGA
+#define ZX_JOY_MODE 60  // MODE on SEGA
+// free pins = 61,62,63
 
 // kbd commands
 #define CMD_KBD_BYTE1 0x01
@@ -105,5 +113,6 @@
 #define CMD_KBD_BYTE5 0x05
 #define CMD_KBD_BYTE6 0x06
 #define CMD_KBD_BYTE7 0x07
+#define CMD_KBD_BYTE8 0x08
 
 #endif
