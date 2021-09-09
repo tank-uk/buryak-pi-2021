@@ -38,4 +38,7 @@
 #define EEPROM_VALUE_TRUE 10
 #define EEPROM_VALUE_FALSE 20
 
+#define CMD_INIT 0xF0
+#define CMD_NONE 0xFF
+
 #endif

@@ -35,6 +35,7 @@ bool is_turbo = false;
 bool is_wait = false;
 byte rom_bank = 0x0;
 bool blink = false;
+bool init_done = false;
 
 unsigned long t = 0;  // current time
 unsigned long tl = 0; // led poll time
@@ -606,14 +607,21 @@ uint8_t get_matrix_byte(uint8_t pos)
 
 void spi_send(uint8_t addr, uint8_t data) 
 {
-      SPI.beginTransaction(settingsA);
-      digitalWrite(PIN_SS, LOW);
-      //uint8_t cmd = SPI.transfer(addr); // command (1...6)
-      //uint8_t res = SPI.transfer(data); // data byte
-      SPI.transfer(addr); // command (1...6)
-      SPI.transfer(data); // data byte
-      digitalWrite(PIN_SS, HIGH);
-      SPI.endTransaction();
+    uint8_t in_cmd = 0;
+    uint8_t in_data = 0;
+
+    SPI.beginTransaction(settingsA);
+    digitalWrite(PIN_SS, LOW);
+    //uint8_t cmd = SPI.transfer(addr); // command (1...6)
+    //uint8_t res = SPI.transfer(data); // data byte
+    in_cmd = SPI.transfer(addr); // command (1...6)
+    in_data = SPI.transfer(data); // data byte
+    digitalWrite(PIN_SS, HIGH);
+    SPI.endTransaction();
+
+    if (in_cmd == CMD_INIT) {
+      init_done = true;
+    }
 }
 
 // transmit keyboard matrix from AVR to CPLD side via SPI
@@ -791,11 +799,14 @@ void setup()
   digitalWrite(LED_TURBO, (turbo != 0) ? HIGH : LOW);
   digitalWrite(LED_ROMBANK, (rom_bank != 0) ? HIGH: LOW);
 
-  delay(2000);
+  kbd.begin(PIN_KBD_DAT, PIN_KBD_CLK);
+
+  // waiting for init
+  while (!init_done) {
+    spi_send(CMD_NONE, 0x00);
+  }
 
   do_reset();
-
-  kbd.begin(PIN_KBD_DAT, PIN_KBD_CLK);
 
   digitalWrite(LED_KBD, LOW);
 }
