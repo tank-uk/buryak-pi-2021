@@ -373,7 +373,7 @@ begin
 	port map (
 		I_CLK		=> CLK_28,
 		I_CS		=> divmmc_enable,
-		I_RESET		=> not(N_RESET),
+		I_RESET		=> not(reset), -- not(N_RESET),
 		I_ADDR		=> A,
 		I_DATA		=> D,
 		O_DATA		=> divmmc_do,
