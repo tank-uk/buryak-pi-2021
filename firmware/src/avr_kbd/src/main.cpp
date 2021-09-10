@@ -658,6 +658,20 @@ void send_macros(uint8_t pos)
   delay(20);
 }
 
+void do_init_reset()
+{
+  clear_matrix(ZX_MATRIX_SIZE);
+  matrix[ZX_K_SP] = true;
+  matrix[ZX_K_RESET] = true;
+  transmit_keyboard_matrix();
+  delay(500);
+  matrix[ZX_K_RESET] = false;
+  transmit_keyboard_matrix(); 
+  delay(200);
+  matrix[ZX_K_SP] = false;
+  transmit_keyboard_matrix();  
+}
+
 void do_reset()
 {
   clear_matrix(ZX_MATRIX_SIZE);
@@ -806,7 +820,7 @@ void setup()
     spi_send(CMD_NONE, 0x00);
   }
 
-  do_reset();
+  do_init_reset();
 
   digitalWrite(LED_KBD, LOW);
 }
